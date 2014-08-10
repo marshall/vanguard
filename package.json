@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/marshall/vanguard/issues"
   },
-  "homepage": "https://github.com/marshall/vanguard"
+  "homepage": "https://github.com/marshall/vanguard",
+  "dependencies": {
+    "serialport": "^1.4.5"
+  }
 }
