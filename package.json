@@ -1,0 +1,20 @@
+{
+  "name": "vanguard",
+  "version": "0.0.0",
+  "description": "A space program for the Web",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marshall/vanguard"
+  },
+  "author": "Marshall Culpepper",
+  "email": "marshall@mozilla.com",
+  "license": "APL2",
+  "bugs": {
+    "url": "https://github.com/marshall/vanguard/issues"
+  },
+  "homepage": "https://github.com/marshall/vanguard"
+}
