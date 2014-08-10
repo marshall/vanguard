@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/marshall/vanguard",
   "dependencies": {
+    "coap": "^0.7.2",
     "serialport": "^1.4.5"
   }
 }
