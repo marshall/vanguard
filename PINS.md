@@ -6,8 +6,8 @@ of the Stratosphere HAB
 <table>
     <tr><th>Component</th><th>Label</th><th>BeagleBone Black pin</th></tr>
     <tr><td>Camera Cape</td><td>-</td><td>P9_11 - GPIO0_30</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P9_17 - GPIO0_5</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P9_18 - GPIO0_4</td></tr>
+    <tr><td>Camera Cape</td><td>-</td><td>P9_17 - GPIO0_5 (I2C1_SCL)</td></tr>
+    <tr><td>Camera Cape</td><td>-</td><td>P9_18 - GPIO0_4 (I2C1_SDA)</td></tr>
     <tr><td>Camera Cape</td><td>-</td><td>P9_19 - I2C2_SCL</td></tr>
     <tr><td>Camera Cape</td><td>-</td><td>P9_20 - I2C2_SDA</td></tr>
     <tr><td>TNC-Black</td><td>RX</td><td>P9_21 - UART2_TXD</td></tr>
