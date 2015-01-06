@@ -11,13 +11,16 @@ from looper import Interval
 
 @command('beacon')
 class Beacon(Interval):
+    packet_fmt   = '{callsign}>APRS,{path}:{text}'
+    location_fmt = '/{time}h{location}O{course:03.0f}/{speed:03.0f}/A={alt:06.0f}'
+
     def __init__(self, config):
         super(Beacon, self).__init__(interval=config.beacon.interval)
         self.beacon = config.beacon
         self.redis = redis.StrictRedis()
 
     def format_packet(self, text):
-        return "{callsign}>APRS,{path}:{text}".format(text=text, **self.beacon)
+        return self.packet_fmt.format(text=text, **self.beacon)
 
     def format_latlon_dm(self, dd, type='lat'):
         is_positive = dd >= 0
@@ -55,8 +58,8 @@ class Beacon(Interval):
         speed_kmh = (speed / 1000.0) * 3600.0 # meters/sec -> km/hour
         alt_feet = alt * 3.28084
 
-        fmt = '@{time}h{location}O{course:03.0f}/{speed:03.0f}/A={alt:06.1f}'
-        packet = fmt.format(time=time.strftime('%H%M%S'),
+        packet = self.location_fmt.format(
+                   time=time.strftime('%H%M%S'),
                    location='/'.join([lat_dm, lon_dm]),
                    course=track,
                    speed=speed_kmh,
