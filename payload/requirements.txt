@@ -1,0 +1,9 @@
+meld3==1.0.0
+mock==1.0.1
+mockredispy==2.9.0.10
+pexif==0.15
+pyserial==2.7
+python-dateutil==2.4.0
+redis==2.10.3
+six==1.9.0
+supervisor==3.1.3

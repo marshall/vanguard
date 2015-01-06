@@ -1,0 +1,32 @@
+{
+  "gps": {
+    "device": "/dev/ttyO1",
+    "gpsd": "/usr/sbin/gpsd",
+    "gpsd_sock": "/var/run/gpsd.sock"
+  },
+
+  "camera": {
+    "device": "/dev/video0",
+    "resolution": "1280x960",
+    "quality": 90,
+    "depth": 24,
+    "interval": 15,
+    "streamer": "/usr/bin/streamer"
+  },
+
+  "beacon": {
+    "callsign": "N5JHH-2",
+    "path": "WIDE1-1",
+    "interval": 15,
+    "device": "/dev/ttyO2",
+    "baudrate": 19200
+  },
+
+  "temp": {
+    "int_temp_pin": "P9_37",
+    "ext_temp_pin": "P9_39",
+    "interval": 5
+  },
+
+  "work_dir": "/var/run/pepper2"
+}
