@@ -42,7 +42,6 @@ class Location(Looper):
                         time=report.get('time'))
 
         location_str = json.dumps(location)
-        self.log.info(location_str)
         self.redis.rpush('locations', location_str)
 
     def on_stopped(self):
@@ -57,7 +56,7 @@ class Location(Looper):
             return
 
         report = self.session.next()
-        self.log.info(report)
+        self.log.debug(report)
 
         report_class = report.get('class')
         if report_class == 'TPV':

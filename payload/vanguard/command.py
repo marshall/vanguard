@@ -19,7 +19,7 @@ def import_command(name):
         module = __import__(name, globals(), locals(), ['*'])
         cls = _commands.get(name)
         if not cls:
-            raise CommandException('No command class found: %s', argv.command)
+            raise CommandException('No command class found: %s' % name)
         return cls
     except ImportError, e:
-        raise CommandException('No such command: %s', argv.command)
+        raise CommandException('Error importing package "%s": %s' % (name, str(e)))
