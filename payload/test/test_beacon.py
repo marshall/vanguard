@@ -18,6 +18,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('beacon-test')
 
 class BeaconTest(unittest.TestCase):
+    @mock.patch.dict('sys.modules', Adafruit_BBIO=mock.MagicMock())
+    @mock.patch.dict('sys.modules', {'Adafruit_BBIO.UART': mock.MagicMock()})
     @mock.patch('redis.StrictRedis', mockredis.mock_strict_redis_client)
     def setUp(self):
         self.config = config.Config(data=dict(beacon=dict(
@@ -40,6 +42,6 @@ class BeaconTest(unittest.TestCase):
         logger.info(self.beacon.send_packet.mock_calls)
 
         self.beacon.send_packet.assert_called_with(
-            'ABCD1>APRS,PATH:@222735h1200.00N/03400.00EO001/044/A=0183.7')
+            'ABCD1>APRS,PATH:/222735h1200.00N/03400.00EO001/044/A=000184')
 
 

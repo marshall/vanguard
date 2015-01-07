@@ -17,9 +17,10 @@
   "beacon": {
     "callsign": "N5JHH-2",
     "path": "WIDE2-1",
-    "interval": 15,
+    "interval": 10,
     "device": "/dev/ttyO2",
-    "baudrate": 19200
+    "baudrate": 19200,
+    "uart": "UART2"
   },
 
   "temp": {
