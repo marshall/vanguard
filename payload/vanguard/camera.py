@@ -21,6 +21,7 @@ class Camera(Interval):
 
         self.camera = config.camera
         self.redis = redis.StrictRedis()
+        self.proc = None
 
     def geotag_photo(self, filename):
         if not self.redis.exists('locations'):
@@ -49,11 +50,18 @@ class Camera(Interval):
                '-o', filename]
         try:
             self.log.info(" ".join(cmd))
-            subprocess.check_call(cmd)
+            self.proc = subprocess.Popen(cmd)
+            self.proc.wait()
+
             self.redis.rpush('photos', filename)
             self.geotag_photo(filename)
         except subprocess.CalledProcessError, e:
             self.log.error('Failed to call streamer: %s', str(e))
+
+    def on_cleanup(self):
+        if self.proc:
+            self.proc.terminate()
+            self.proc = None
 
 if __name__ == '__main__':
     Camera().main()
