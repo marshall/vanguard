@@ -1,4 +1,6 @@
 #!/bin/bash
 
 this_dir=$(cd "`dirname "$0"`"; pwd)
-/usr/bin/env python "$this_dir/vanguard/main.py" $@
+
+export PYTHONPATH="$this_dir/vanguard:$PYTHONPATH"
+exec /usr/bin/env python -m main $@
