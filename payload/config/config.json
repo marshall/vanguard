@@ -1,7 +1,15 @@
 {
+  "debug": false,
+  "work_dir": "/var/run/vanguard",
+
+  "programs": {
+    "direwolf": "/usr/local/bin/direwolf",
+    "gpsd": "/usr/sbin/gpsd",
+    "streamer": "/usr/bin/streamer"
+  },
+
   "gps": {
     "device": "/dev/ttyO1",
-    "gpsd": "/usr/sbin/gpsd",
     "gpsd_sock": "/var/run/gpsd.sock"
   },
 
@@ -10,24 +18,23 @@
     "resolution": "1280x960",
     "quality": 90,
     "depth": 24,
-    "interval": 15,
-    "streamer": "/usr/bin/streamer"
+    "interval": 15
   },
 
   "beacon": {
     "callsign": "N5JHH-2",
     "path": "WIDE2-1",
-    "interval": 10,
-    "device": "/dev/ttyO2",
-    "baudrate": 19200,
-    "uart": "UART2"
+
+    "position_interval": 15,
+    "telemetry_interval": 60,
+    "beacon_interval": 300,
+    "tnc_device": "/tmp/kisstnc",
+    "tnc_baudrate": 1200
   },
 
   "temp": {
     "int_temp_pin": "P9_37",
     "ext_temp_pin": "P9_39",
     "interval": 5
-  },
-
-  "work_dir": "/var/run/pepper2"
+  }
 }

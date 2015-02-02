@@ -19,6 +19,7 @@ class Camera(Interval):
         if not os.path.exists(self.photo_dir):
             os.makedirs(self.photo_dir)
 
+        self.streamer = config.programs.streamer
         self.camera = config.camera
         self.redis = redis.StrictRedis()
         self.proc = None
@@ -42,11 +43,11 @@ class Camera(Interval):
         filename = os.path.join(self.photo_dir,
                                 '%05d.jpeg' % self.redis.llen('photos'))
 
-        cmd = [self.camera['streamer'],
-               self.camera['device'],
-               '-s', self.camera['resolution'],
-               '-j', str(self.camera['quality']),
-               '-b', str(self.camera['depth']),
+        cmd = [self.streamer,
+               self.camera.device,
+               '-s', self.camera.resolution,
+               '-j', str(self.camera.quality),
+               '-b', str(self.camera.depth),
                '-o', filename]
         try:
             self.log.info(" ".join(cmd))

@@ -1,9 +1,13 @@
+import binascii
 import datetime
+import logging
 import json
+import time
 
+import afsk, afsk.ax25
 import dateutil.parser
+import kiss
 import redis
-import serial
 import socket
 
 from command import command
@@ -11,13 +15,14 @@ from looper import Interval
 
 @command('beacon')
 class Beacon(Interval):
-    packet_fmt   = '{callsign}>APRS,{path}:{text}'
     location_fmt = '/{time}h{location}O{course:03.0f}/{speed:03.0f}/A={alt:06.0f}'
     telemetry_fmt = 'T#{packet_id:03d},{r1:03d},{r2:03d},{r3:03d},{r4:03d},{r5:03d},{d:08b}'
 
     def __init__(self, config):
-        super(Beacon, self).__init__(interval=config.beacon.interval)
+        super(Beacon, self).__init__(interval=config.beacon.position_interval)
         self.beacon = config.beacon
+        self.telemetry_multiple = config.beacon.telemetry_interval / \
+                                  config.beacon.position_interval
         self.redis = redis.StrictRedis()
         self.telemetry_count = 0
 
@@ -25,8 +30,8 @@ class Beacon(Interval):
             import Adafruit_BBIO.UART as UART
             UART.setup(self.beacon.uart)
 
-    def format_packet(self, text):
-        return self.packet_fmt.format(text=text, **self.beacon)
+        self.tnc = kiss.KISS(self.beacon.tnc_device, self.beacon.tnc_baudrate)
+        self.tnc.start()
 
     def format_latlon_dm(self, dd, type='lat'):
         is_positive = dd >= 0
@@ -45,9 +50,19 @@ class Beacon(Interval):
     def send_packet(self, packet):
         self.log.info('SEND %s', packet)
         try:
-            ser = serial.Serial(self.beacon.device, self.beacon.baudrate, timeout=1)
-            ser.write(packet)
-            ser.close()
+            digis = (bytes(digi) for digi in self.beacon.path.split(','))
+            ax25_packet = afsk.ax25.UI(source=self.beacon.callsign,
+                                       digipeaters=digis,
+                                       info=bytes(packet))
+
+            frame = b'{header}{info}'.format(
+                flag=ax25_packet.flag,
+                header=ax25_packet.header(),
+                info=ax25_packet.info,
+                fcs=ax25_packet.fcs())
+
+            self.log.debug('AX.25 frame: %s', binascii.hexlify(frame))
+            self.tnc.write(frame)
         except socket.timeout, e:
             self.log.error('serial write timeout')
 
@@ -70,7 +85,7 @@ class Beacon(Interval):
                    speed=speed_kmh,
                    alt=alt_feet)
 
-        self.send_packet(self.format_packet(packet))
+        self.send_packet(packet)
 
     def send_telemetry(self, int_temp=0.0, ext_temp=0.0):
         packet_id = self.redis.get('telemetry') or 0
@@ -80,7 +95,7 @@ class Beacon(Interval):
                 r2=int(ext_temp),
                 r3=0, r4=0, r5=0, d=0) # the rest of the readings are unused for now
 
-        self.send_packet(self.format_packet(packet))
+        self.send_packet(packet)
         self.redis.incr('telemetry')
 
     def on_interval(self):
@@ -91,7 +106,7 @@ class Beacon(Interval):
         location = json.loads(data)
         self.send_location(**location)
 
-        if self.telemetry_count % 4 == 0:
+        if self.telemetry_count % self.telemetry_multiple == 0:
             data = self.redis.lindex('temps', -1)
             if data:
                 temps = json.loads(data)

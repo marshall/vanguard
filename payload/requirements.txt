@@ -1,3 +1,4 @@
+kiss==2.0.2
 meld3==1.0.0
 mock==1.0.1
 mockredispy==2.9.0.10
