@@ -28,6 +28,9 @@
     "position_interval": 15,
     "telemetry_interval": 60,
     "beacon_interval": 300,
+    "radio_uart": "UART5",
+    "radio_device": "/dev/ttyO5",
+    "radio_baudrate": 9600,
     "tnc_device": "/tmp/kisstnc",
     "tnc_baudrate": 1200
   },
