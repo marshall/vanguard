@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">vanguard</string>
+    <string name="connected_yes">YES</string>
+    <string name="connected_no">NO</string>
+</resources>
