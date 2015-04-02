@@ -5,8 +5,8 @@ This is a table of pins currently used by the various subsystems and sensors
 of the Stratosphere HAB
 <table>
     <tr><th>Component</th><th>Label</th><th>BeagleBone Black pin</th></tr>
-    <tr><td>eMMC</td><td>-</td><td>P9_11 through P9_21 are/not used by eMMC</td></tr>
-    <tr><td>HDMI</td><td>-</td><td>P8_27 through P8_46 are/not used by HDMI</td></tr>
+    <tr><td>eMMC</td><td>eMMC</td><td>P9_11 through P9_21 would be used by the eMMC boot.</td></tr>
+    <tr><td>HDMI</td><td>HDMI</td><td>P8_27 through P8_46 would be used by the HDMI interface. </td></tr>
     <tr><td>Camera Cape</td><td>-</td><td>P9_11 - GPIO0_30</td></tr>
     <tr><td>Camera Cape</td><td>-</td><td>P9_17 - GPIO0_5 (I2C1_SCL)</td></tr>
     <tr><td>Camera Cape</td><td>-</td><td>P9_18 - GPIO0_4 (I2C1_SDA)</td></tr>
@@ -42,6 +42,6 @@ of the Stratosphere HAB
     <tr><td>Camera Cape</td><td>-</td><td>P8_24 - GPMC_AD1</td></tr>
     <tr><td>Camera Cape</td><td>-</td><td>P8_25 - GPMC_AD0</td></tr>
     <tr><td>5V-3.3V serial bidirectional voltage level translator enable</td><td>-</td><td>P8_26 - GPMC_CSN0</td></tr>
-    <tr><td>XTEND900</td><td>-</td><td>P8_37 - TX5</td></tr>
-    <tr><td>XTEND900</td><td>-</td><td>P8_38 - RX5</td></tr>
+    <tr><td>XTEND900</td><td>RX (DI)</td><td>P8_37 - TX5</td></tr>
+    <tr><td>XTEND900</td><td>TX (DO)</td><td>P8_38 - RX5</td></tr>
 </table>
