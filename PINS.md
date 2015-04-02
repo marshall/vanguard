@@ -41,7 +41,7 @@ of the Stratosphere HAB
     <tr><td>Camera Cape</td><td>-</td><td>P8_23 - GPMC_AD4</td></tr>
     <tr><td>Camera Cape</td><td>-</td><td>P8_24 - GPMC_AD1</td></tr>
     <tr><td>Camera Cape</td><td>-</td><td>P8_25 - GPMC_AD0</td></tr>
-    <tr><td>5V-3.3V serial bidirectional voltage level translator enable</td><td>-</td><td>P8_26 - GPMC_CSN0</td></tr>
+    <tr><td>5V-3.3V serial bidirectional voltage level translator enable</td><td>LSF0204 (EN)</td><td>P8_26 - GPMC_CSN0</td></tr>
     <tr><td>XTEND900</td><td>RX (DI)</td><td>P8_37 - TX5</td></tr>
     <tr><td>XTEND900</td><td>TX (DO)</td><td>P8_38 - RX5</td></tr>
 </table>
