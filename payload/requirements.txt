@@ -1,3 +1,7 @@
+afsk==0.0.3
+argparse==1.3.0
+audiogen==0.0.2
+bitarray==0.8.1
 kiss==2.0.2
 meld3==1.0.0
 mock==1.0.1
@@ -8,3 +12,4 @@ python-dateutil==2.4.0
 redis==2.10.3
 six==1.9.0
 supervisor==3.1.3
+wsgiref==0.1.2
