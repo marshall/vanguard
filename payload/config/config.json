@@ -10,7 +10,8 @@
 
   "gps": {
     "device": "/dev/ttyO1",
-    "gpsd_sock": "/var/run/gpsd.sock"
+    "gpsd_sock": "/var/run/gpsd.sock",
+    "uart": "UART1"
   },
 
   "camera": {

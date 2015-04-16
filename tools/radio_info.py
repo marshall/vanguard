@@ -20,12 +20,21 @@ radio = Xtend900(device=cfg.beacon.radio_device,
 
 radio.connect()
 
+levels = ['1mW', '10mW', '100mW', '500mW', '1W']
+
 print '''
-Radio Address: %s
-Radio Version Info: %s
-Radio Power Level: %s''' % (radio.address, radio.version_info, radio.power_level)
+Version Info: {version_info}
+Radio Address: 0x{addr:04X}
+Radio Power Level: {level_str} ({level})
+Board Temp: {board_temp} C
+Voltage: {voltage} V
+Rcv Signal: {rx_db} dB
+Rcv Err Count: {rx_err_count}
+Rcv Good Count: {rx_good_count}
+Xmit Err Count: {tx_err_count}
 
-diag = radio.read_diagnostics()
+'''.format(addr=radio.address,
+           level=radio.power_level,
+           level_str=levels[radio.power_level],
+           **radio.diag)
 
-print 'Diagnostics:'
-print json.dumps(diag, sort_keys=True, indent=4, separators=(',', ': '))

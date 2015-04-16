@@ -22,75 +22,71 @@ class Xtend900(looper.Looper):
         self.baudrate = baudrate
         self.uart = uart
 
+        self.cmd_mode = 0
         self.connected = False
+        self.diag = dict()
         self.address = '?'
-        self.version_info = '?'
         self.power_level = 0
 
     def connect(self):
         UART.setup(self.uart)
         self.serial = serial.Serial(port=self.device,
                                     baudrate=self.baudrate,
-                                    timeout=2)
+                                    timeout=5)
         self.connected = True
-        self.read_config()
+
+        #with self.command_mode():
+        #    self.read_config()
+        #    self.read_diagnostics()
 
     @contextmanager
     def command_mode(self):
-        cmd_mode = True
         try:
-            cmd_mode = self.enter_command_mode()
-            if not cmd_mode:
+            self.enter_command_mode()
+            if not self.cmd_mode:
                 raise RuntimeError('Couldn\'t enter command mode')
 
             yield
         finally:
-            if cmd_mode:
-                self.leave_command_mode()
+            self.leave_command_mode()
 
     def enter_command_mode(self):
+        if self.cmd_mode > 0:
+            self.cmd_mode += 1
+            return True
+
         self.write('+++')
         success = self.read_OK()
         if not success:
             self.log.warn('Couldn\'t enter command mode')
+        else:
+            self.cmd_mode += 1
 
         return success
 
     def leave_command_mode(self):
-        self.write('ATCN\r')
-        self.read_AT_lines()
+        if self.cmd_mode == 1:
+            self.write_AT_command('CN')
+            self.read_AT_lines()
+        self.cmd_mode -= 1
 
     def read_config(self):
         self.log.info('Reading radio config')
+
         with self.command_mode():
-            self.log.debug('getting address')
-            self.write('ATMY\r')
-            self.address = self.read_AT_line()
+            self.write_AT_commands('MY', 'PL')
+            self.address = self.read_AT_hex()
 
-            self.log.debug('address:%s. getting version info', self.address)
-            self.write('ATVL\r')
-            result = self.read_AT_lines(3)
-            if len(result) > 0:
-                if 'OK' in result:
-                    result.remove('OK')
-                self.version_info = '/ '.join(result)
-
-            self.log.debug('version_info:%s. getting power level',
-                           self.version_info)
-            self.write('ATPL\r')
             result = self.read_AT_lines(1)
             if len(result) > 0:
                 self.power_level = int(result[0])
 
-            self.log.debug('power_level=%d', self.power_level)
-
     def set_power_level(self, power_level):
         with self.command_mode():
-            self.write('ATPL %d\r' % self.power_level)
+            self.write_AT_command('PL', str(self.power_level))
             result = self.read_AT_lines()
-            self.log.info('ATPL set lines = %d, (%s)', len(result), ','.join(result))
 
-            self.write('ATPL\r')
+            self.write_AT_command('PL')
             result = self.read_AT_lines(1)
             if len(result) > 0:
                 self.power_level = int(result[0])
@@ -98,23 +94,25 @@ class Xtend900(looper.Looper):
         return self.power_level == power_level
 
     def read_diagnostics(self):
-        self.diag = dict()
-
-        def hex_cmd(suffix):
-            self.write('AT%s\r' % suffix)
-            return int(self.read_AT_line(), 16)
-
-        hex_val = lambda: int(self.read_AT_line(), 16)
         with self.command_mode():
-            commands = 'AT%s\r' % (','.join(('%V', 'DB', 'ER', 'GD', 'TP', 'TR')))
-            self.write(commands)
+            self.write_AT_commands('VL', '%V', 'DB', 'ER', 'GD', 'TP', 'TR')
 
-            self.diag['voltage'] = round(hex_val() / 65536.0, 2)
-            self.diag['rx_db'] = hex_val()
-            self.diag['rx_err_count'] = hex_val()
-            self.diag['rx_good_count'] = hex_val()
-            self.diag['board_temp'] = hex_val()
-            self.diag['tx_err_count'] = hex_val()
+            result = self.read_AT_lines(2)
+            if len(result) > 0:
+                if 'OK' in result:
+                    result.remove('OK')
+                self.diag['version_info'] = [r.strip() for r in result]
+
+            self.diag['voltage'] = round(self.read_AT_hex() / 65536.0, 3)
+
+            self.diag['rx_db'] = -self.read_AT_hex()
+            if self.diag['rx_db'] == -0x8000:
+                self.diag['rx_db'] = 0
+
+            self.diag['rx_err_count'] = self.read_AT_hex()
+            self.diag['rx_good_count'] = self.read_AT_hex()
+            self.diag['board_temp'] = self.read_AT_hex()
+            self.diag['tx_err_count'] = self.read_AT_hex()
 
         return self.diag
 
@@ -134,7 +132,9 @@ class Xtend900(looper.Looper):
             response.append(c[0])
 
         if len(response) > 0:
-            return ''.join(response)
+            line = ''.join(response)
+            self.log.debug('<< %s', line)
+            return line
 
         return None
 
@@ -155,10 +155,24 @@ class Xtend900(looper.Looper):
 
         return responses
 
+    def read_AT_hex(self):
+        return int(self.read_AT_line(), 16)
+
+    def write_AT_command(self, command, *args):
+        cmd = 'AT%s' % command
+        if len(args) > 0:
+            cmd += ' ' + (' '.join(args))
+
+        self.write('%s\r' % cmd)
+
+    def write_AT_commands(self, *commands):
+        self.write('AT%s\r' % ','.join(commands))
+
     def write_line(self, str):
         self.log.info(str)
         self.write(str + '\r\n')
 
     def write(self, str):
+        self.log.debug('>> %s', str.replace('\r\n', ''))
         self.serial.write(str)
         self.serial.flush()
