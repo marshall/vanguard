@@ -25,7 +25,8 @@ class BeaconTest(unittest.TestCase):
         self.config = config.Config(data=dict(beacon=dict(
             callsign='ABCD1',
             path='PATH',
-            interval=5
+            position_interval=5,
+            telemetry_interval=5
         )))
         self.beacon = beacon.Beacon(self.config)
         self.redis = self.beacon.redis
@@ -41,7 +42,8 @@ class BeaconTest(unittest.TestCase):
         self.assertTrue(self.beacon.send_packet.called)
         logger.info(self.beacon.send_packet.mock_calls)
 
-        self.beacon.send_packet.assert_called_with(
-            'ABCD1>APRS,PATH:/222735h1200.00N/03400.00EO001/044/A=000184')
+        self.beacon.send_packet.assert_called_with('/222735h1200.00N/03400.00EO001/044/A=000184')
 
 
+if __name__ == '__main__':
+    unittest.main()

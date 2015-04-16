@@ -25,13 +25,24 @@ class Beacon(Interval):
                                   config.beacon.position_interval
         self.redis = redis.StrictRedis()
         self.telemetry_count = 0
+        self.radios = []
 
         if 'uart' in self.beacon:
             import Adafruit_BBIO.UART as UART
             UART.setup(self.beacon.uart)
 
-        self.tnc = kiss.KISS(self.beacon.tnc_device, self.beacon.tnc_baudrate)
-        self.tnc.start()
+        if 'radio_uart' in self.beacon:
+            from xtend900 import Xtend900
+            radio = Xtend900(device=self.beacon.radio_device,
+                             baudrate=self.beacon.radio_baudrate,
+                             uart=self.beacon.radio_uart)
+            radio.connect()
+            self.radios.append(radio)
+
+        if 'tnc_device' in self.beacon:
+            tnc = kiss.KISS(self.beacon.tnc_device, self.beacon.tnc_baudrate)
+            tnc.start()
+            self.radios.append(tnc)
 
     def format_latlon_dm(self, dd, type='lat'):
         is_positive = dd >= 0
@@ -49,22 +60,24 @@ class Beacon(Interval):
 
     def send_packet(self, packet):
         self.log.info('SEND %s', packet)
-        try:
-            digis = (bytes(digi) for digi in self.beacon.path.split(','))
-            ax25_packet = afsk.ax25.UI(source=self.beacon.callsign,
-                                       digipeaters=digis,
-                                       info=bytes(packet))
+        digis = (bytes(digi) for digi in self.beacon.path.split(','))
+        ax25_packet = afsk.ax25.UI(source=self.beacon.callsign,
+                                   digipeaters=digis,
+                                   info=bytes(packet))
 
-            frame = b'{header}{info}'.format(
-                flag=ax25_packet.flag,
-                header=ax25_packet.header(),
-                info=ax25_packet.info,
-                fcs=ax25_packet.fcs())
+        frame = b'{header}{info}'.format(
+            flag=ax25_packet.flag,
+            header=ax25_packet.header(),
+            info=ax25_packet.info,
+            fcs=ax25_packet.fcs())
 
-            self.log.debug('AX.25 frame: %s', binascii.hexlify(frame))
-            self.tnc.write(frame)
-        except socket.timeout, e:
-            self.log.error('serial write timeout')
+        self.log.debug('AX.25 frame: %s', binascii.hexlify(frame))
+        for radio in self.radios:
+            try:
+                radio.write(frame)
+            except socket.timeout, e:
+                self.log.error('serial write timeout')
+
 
     def send_location(self, lat=0.0, lon=0.0, alt=0.0, track=0.0, speed=0.0, time=0.0, **kwargs):
         lat_dm = self.format_latlon_dm(lat)
