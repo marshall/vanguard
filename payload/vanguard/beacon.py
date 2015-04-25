@@ -10,13 +10,18 @@ import kiss
 import redis
 import socket
 
+import proto
+import os
+import sys
+import subprocess
+
 from command import command
 from looper import Interval
 
 @command('beacon')
 class Beacon(Interval):
-    location_fmt = '/{time}h{location}O{course:03.0f}/{speed:03.0f}/A={alt:06.0f}'
-    telemetry_fmt = 'T#{packet_id:03d},{r1:03d},{r2:03d},{r3:03d},{r4:03d},{r5:03d},{d:08b}'
+    # location_fmt = '/{time}h{location}O{course:03.0f}/{speed:03.0f}/A={alt:06.0f}'
+    # telemetry_fmt = 'T#{packet_id:03d},{r1:03d},{r2:03d},{r3:03d},{r4:03d},{r5:03d},{d:08b}'
 
     def __init__(self, config):
         super(Beacon, self).__init__(interval=config.beacon.position_interval)
@@ -44,72 +49,89 @@ class Beacon(Interval):
             tnc.start()
             self.radios.append(tnc)
 
-    def format_latlon_dm(self, dd, type='lat'):
-        is_positive = dd >= 0
-        degrees = abs(int(dd))
-        minutes = abs(int(dd) - dd) * 60
+    # def format_latlon_dm(self, dd, type='lat'):
+    #     is_positive = dd >= 0
+    #     degrees = abs(int(dd))
+    #     minutes = abs(int(dd) - dd) * 60
 
-        if type == 'lat': # latitude
-            suffix = 'N' if is_positive else 'S'
-            degrees_fmt = '%02d'
-        else: # longitude
-            suffix = 'E' if is_positive else 'W'
-            degrees_fmt = '%03d'
+    #     if type == 'lat': # latitude
+    #         suffix = 'N' if is_positive else 'S'
+    #         degrees_fmt = '%02d'
+    #     else: # longitude
+    #         suffix = 'E' if is_positive else 'W'
+    #         degrees_fmt = '%03d'
 
-        return ''.join([degrees_fmt % degrees, '%05.2f' % minutes, suffix])
+    #     return ''.join([degrees_fmt % degrees, '%05.2f' % minutes, suffix])
 
-    def send_packet(self, packet):
-        self.log.info('SEND %s', packet)
-        digis = (bytes(digi) for digi in self.beacon.path.split(','))
-        ax25_packet = afsk.ax25.UI(source=self.beacon.callsign,
-                                   digipeaters=digis,
-                                   info=bytes(packet))
+    # def send_packet(self, packet):
+    #     self.log.info('SEND %s', packet)
+    #     digis = (bytes(digi) for digi in self.beacon.path.split(','))
+    #     ax25_packet = afsk.ax25.UI(source=self.beacon.callsign,
+    #                                digipeaters=digis,
+    #                                info=bytes(packet))
 
-        frame = b'{header}{info}'.format(
-            flag=ax25_packet.flag,
-            header=ax25_packet.header(),
-            info=ax25_packet.info,
-            fcs=ax25_packet.fcs())
+    #     frame = b'{header}{info}'.format(
+    #         flag=ax25_packet.flag,
+    #         header=ax25_packet.header(),
+    #         info=ax25_packet.info,
+    #         fcs=ax25_packet.fcs())
 
-        self.log.debug('AX.25 frame: %s', binascii.hexlify(frame))
+    #     self.log.debug('AX.25 frame: %s', binascii.hexlify(frame))
+    #     for radio in self.radios:
+    #         try:
+    #             radio.write(frame)
+    #         except socket.timeout, e:
+    #             self.log.error('serial write timeout')
+
+    def send_message(self, msg, src='beacon', **kwargs):
+        if not isinstance(msg, proto.Msg):
+            msg = msg.from_data(**kwargs)
+
+        self.log.message(msg)
+
         for radio in self.radios:
-            try:
-                radio.write(frame)
-            except socket.timeout, e:
-                self.log.error('serial write timeout')
+          try:
+              radio.write(frame)
+          except socket.timeout, e:
+              self.log.error('serial write timeout')
 
 
     def send_location(self, lat=0.0, lon=0.0, alt=0.0, track=0.0, speed=0.0, time=0.0, **kwargs):
-        lat_dm = self.format_latlon_dm(lat)
-        lon_dm = self.format_latlon_dm(lon, type='lon')
+         self.send_message(proto.LocationMsg,
+                          latitude=lat,
+                          longitude=lon,
+                          altitude=alt,
+                          #quality=self.gps.quality,
+                          #satellites=self.gps.satellites,
+                          speed=speed)
 
-        if isinstance(time, (int, float)):
-            time = datetime.datetime.fromtimestamp(float(time))
-        else:
-            time = dateutil.parser.parse(time)
 
-        speed_kmh = (speed / 1000.0) * 3600.0 # meters/sec -> km/hour
-        alt_feet = alt * 3.28084
 
-        packet = self.location_fmt.format(
-                   time=time.strftime('%H%M%S'),
-                   location='/'.join([lat_dm, lon_dm]),
-                   course=track,
-                   speed=speed_kmh,
-                   alt=alt_feet)
+    def send_telemetry(self, **kwargs):
+        self.send_message(proto.TelemetryMsg,
+                          uptime=int(kwargs.get("uptime")),
+                          mode=0,
+                          cpu_usage=int(kwargs.get("cpu_usage")),
+                          free_mem=int(kwargs.get("free_mem")/1024),
+                          int_temperature=kwargs.get("int_temp",0),
+                          int_humidity=0,
+                          ext_temperature=kwargs.get("ext_temp",0))
+        self.redis.incr('telemetry') 
 
-        self.send_packet(packet)
-
-    def send_telemetry(self, int_temp=0.0, ext_temp=0.0):
-        packet_id = self.redis.get('telemetry') or 0
-        packet = self.telemetry_fmt.format(
-                packet_id=int(packet_id),
-                r1=int(int_temp),
-                r2=int(ext_temp),
-                r3=0, r4=0, r5=0, d=0) # the rest of the readings are unused for now
-
-        self.send_packet(packet)
-        self.redis.incr('telemetry')
+    def collect_telemetry(self):
+	telemetry = dict()
+	data = self.redis.lindex('temps', -1)
+	stats = self.update_stats()
+	if stats:
+	     telemetry.update(stats)
+        if data:
+             temps = json.loads(data)
+	     telemetry["int_temp"] = temps['int']
+        
+	
+	self.send_telemetry(**telemetry)
+        
+       
 
     def on_interval(self):
         data = self.redis.lindex('locations', -1)
@@ -120,9 +142,17 @@ class Beacon(Interval):
         self.send_location(**location)
 
         if self.telemetry_count % self.telemetry_multiple == 0:
-            data = self.redis.lindex('temps', -1)
-            if data:
-                temps = json.loads(data)
-                self.send_telemetry(int_temp=temps['int'])
-        self.telemetry_count += 1
+		self.collect_telemetry()
+		self.telemetry_count += 1
+
+
+    def update_stats(self):
+        try:
+	    sys_helper = os.path.join(os.path.dirname(__file__),'sys_helper.sh')
+            result = subprocess.check_output([sys_helper, 'get_stats'])
+
+            return json.loads(result)
+
+        except subprocess.CalledProcessError, e:
+            return None
 
