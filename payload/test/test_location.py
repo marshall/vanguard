@@ -10,12 +10,9 @@ import unittest
 import mock
 import mockredis
 
-this_dir = os.path.abspath(os.path.dirname(__file__))
-vanguard_dir = os.path.abspath(os.path.join(this_dir, '..', 'vanguard'))
-sys.path.append(vanguard_dir)
-
-import config
-import location
+this_dir = os.path.dirname(os.path.abspath(__file__))
+top_dir = os.path.dirname(this_dir)
+sys.path.append(top_dir)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('location-test')
@@ -27,7 +24,7 @@ class GpsFake(threading.Thread):
 
     def run(self):
         gps_log = os.path.join(this_dir, 'gps.log')
-        cmd = ['gpsfake', '-c', '0.1', gps_log]
+        cmd = ['gpsfake', '-c', '0.01', gps_log]
         logger.info(cmd)
 
         self.proc = subprocess.Popen(cmd)
@@ -44,23 +41,21 @@ class LocationTest(unittest.TestCase):
 
     @mock.patch('redis.StrictRedis', mockredis.mock_strict_redis_client)
     def test_location(self):
+        from vanguard import location, config
         l = location.Location(config.Config())
         while not l.ensure_connected():
             pass
 
-        l.on_iteration() # VERSION
-        l.on_iteration() # DEVICES
-        l.on_iteration() # WATCH
-        l.on_iteration() # DEVICE
-        l.on_iteration() # first lock
+        while l.redis.llen('locations') == 0:
+            l.on_iteration()
 
-        self.assertEqual(l.redis.llen('locations'), 1)
         loc = l.redis.lindex('locations', -1)
         self.assertTrue(loc is not None)
+        self.assertEqual(l.redis.get('location_session_count'), '1')
 
         data = json.loads(loc)
-        self.assertTrue(data['lat'] > 0)
-        self.assertTrue(data['lon'] > 0)
+        self.assertTrue(data['lat'] != 0)
+        self.assertTrue(data['lon'] != 0)
 
     def tearDown(self):
         self.gpsfake.stop()

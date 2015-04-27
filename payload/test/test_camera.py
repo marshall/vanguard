@@ -8,18 +8,17 @@ import mock
 import mockredis
 from pexif import JpegFile
 
-this_dir = os.path.abspath(os.path.dirname(__file__))
-vanguard_dir = os.path.abspath(os.path.join(this_dir, '..', 'vanguard'))
-sys.path.append(vanguard_dir)
-
-import config
-import camera
+this_dir = os.path.dirname(os.path.abspath(__file__))
+top_dir = os.path.dirname(this_dir)
+sys.path.append(top_dir)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('camera-test')
 
 class TestCamera(unittest.TestCase):
     def setUp(self):
+        from vanguard import config
+
         self.config = config.Config(data=dict(
             work_dir='/tmp',
             camera=dict(
@@ -27,12 +26,14 @@ class TestCamera(unittest.TestCase):
                 resolution='RESOLUTION',
                 quality=100,
                 depth=24,
-                interval=15,
-                streamer=os.path.join(this_dir, 'mock_streamer.py')
-            )))
+                interval=15
+            ),
+            programs=dict(
+                streamer=os.path.join(this_dir, 'mock_streamer.py'))))
 
     @mock.patch('redis.StrictRedis', mockredis.mock_strict_redis_client)
     def test_camera(self):
+        from vanguard import camera
         c = camera.Camera(self.config)
         c.redis.rpush('locations', '{"lat": 22, "lon": 33, "alt": 44}')
         c.on_interval()
