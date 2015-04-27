@@ -93,27 +93,37 @@ class BeaconTest(unittest.TestCase):
 
     def test_telemetry(self):
         self.redis.rpush('temps', '{"int": 23, "ext": 45}')
-        self.mock_modules['subprocess'].check_output = lambda *args: '{"uptime": 1147,"total_procs": 100,"cpu_usage": 1.2,"total_mem": 510840,"free_mem": 296748}\n'
         primary_write = self.beacon.radios['primary'].device.write = mock.MagicMock()
         secondary_write = self.beacon.radios['secondary'].device.write = mock.MagicMock()
 
-        self.beacon.send_telemetry()
+        opens = {
+            '/proc/uptime': mock.mock_open(read_data='1147 0\n'),
+            '/proc/stat': mock.mock_open(read_data='cpu  26721690 114128 1984006 795144196 395867 159583 0 0 0 0\n'),
+            '/proc/meminfo': mock.mock_open(read_data='MemFree:        236748 kB\n')
+        }
+
+        def mock_open(*args):
+            return opens[args[0]](*args)
+
+        import __builtin__
+        with mock.patch.object(__builtin__, 'open', mock_open):
+            self.beacon.send_telemetry()
 
         self.assertTrue(primary_write.called)
         self.assertTrue(secondary_write.called)
 
         primary_write.assert_called_with(self.vanguard_proto.TelemetryMsg.from_data(
-            uptime=1147,
-            mode=0,
-            cpu_usage=1,
-            free_mem=289,
-            int_temperature=23,
-            int_humidity=0,
-            ext_temperature=45).as_buffer())
+                uptime=1147,
+                mode=0,
+                cpu_usage=3,
+                free_mem=231,
+                int_temperature=23,
+                int_humidity=0,
+                ext_temperature=45).as_buffer())
 
         aprs_formatter = self.aprs_proto.APRSFormatter(callsign='ABCD-1', path='PATH')
         secondary_write.assert_called_with(aprs_formatter.format_packet(
-            'T#000,023,045,000,000,000,00000000'))
+            'T#000,023,045,003,231,019,00000000'))
 
 if __name__ == '__main__':
     unittest.main()

@@ -44,14 +44,15 @@ class APRSFormatter(object):
                                     speed=speed_kmh,
                                     alt=alt_feet)
 
-    def format_telemetry(self, packet_id, int_temp=0, ext_temp=0, **kwargs):
+    def format_telemetry(self, packet_id, int_temp=0, ext_temp=0, cpu_usage=0,
+                         free_mem=0, uptime=0, **kwargs):
         return self.TELEMETRY.format(packet_id=int(packet_id),
                                      r1=int(int_temp),
                                      r2=int(ext_temp),
-                                     r3=0,
-                                     r4=0,
-                                     r5=0,
-                                     d=0) # r3-r5,d are unused for now
+                                     r3=int(cpu_usage),
+                                     r4=int(free_mem / 1024),
+                                     r5=int(uptime / 60),
+                                     d=0) # d is unused for now
 
     def format_packet(self, data):
         digis = (bytes(digi) for digi in self.aprs_path.split(','))

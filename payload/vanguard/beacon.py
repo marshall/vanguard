@@ -1,6 +1,7 @@
 import collections
 import datetime
 import json
+import re
 import time
 
 import redis
@@ -38,11 +39,7 @@ class Beacon(Interval):
             radio.send_location(**location)
 
     def send_telemetry(self):
-        telemetry = dict()
-        stats = self.update_stats()
-        if stats:
-            telemetry.update(stats)
-
+        telemetry = self.update_stats() or dict()
         data = self.redis.lindex('temps', -1)
         if data:
             temps = json.loads(data)
@@ -56,12 +53,39 @@ class Beacon(Interval):
         self.redis.incr('telemetry')
 
     def update_stats(self):
-        try:
-            sys_helper = os.path.join(os.path.dirname(__file__), 'sys_helper.sh')
-            result = subprocess.check_output([sys_helper, 'get_stats'])
-            return json.loads(result)
-        except subprocess.CalledProcessError, e:
-            return None
+        stats = dict()
+        with open('/proc/uptime', 'r') as f:
+            lines = f.read().splitlines()
+            stats['uptime'] = float(lines[0].split()[0])
+
+        with open('/proc/stat', 'r') as f:
+            # usr nice sys idle iowait irq guest
+            for line in f.read().splitlines():
+                tokens = re.split(r' +', line.strip())
+                if tokens[0] != 'cpu':
+                    continue
+
+                usr, nice, sys, idle, iowait = map(float, tokens[1:6])
+                active = usr + sys + iowait
+                total = active + idle
+                percent = active * 100 / total
+                stats['cpu_usage'] = int(percent)
+                break
+
+        with open('/proc/meminfo', 'r') as f:
+            meminfo = dict()
+            for line in f.read().splitlines():
+                tokens = re.split(r'[: ]+', line.strip())
+                meminfo[tokens[0]] = tokens[1]
+
+            if 'MemFree' in meminfo:
+                stats['free_mem'] = int(meminfo['MemFree'])
+
+        return stats
+
+    def read_uptime(self, path='/proc/uptime'):
+        with open(path, 'r'):
+            return float(f.readline().split()[0])
 
     def on_interval(self):
         self.send_location()
