@@ -38,13 +38,18 @@ class Temp(Interval):
 
     def on_interval(self):
         now = time.time()
-        int_temp = self.calc_temp(self.temp.int_temp_pin)
-        #ext_temp = self.calc_temp(self.temp.ext_temp_pin)
+        int_temp = ext_temp = 0
 
-        self.log.info('temp. internal: %.1f', int_temp)
+        if 'int_temp_pin' in self.temp:
+            int_temp = self.calc_temp(self.temp.int_temp_pin)
+
+        if 'ext_temp_pin' in self.temp:
+            ext_temp = self.calc_temp(self.temp.ext_temp_pin)
+
+        self.log.info('temp. internal: %.1f, external: %.1f', int_temp, ext_temp)
 
         self.redis.rpush('temps', json.dumps({
             'int': int_temp,
-            #'ext': ext_temp,
+            'ext': ext_temp,
             'time': now
         }))
