@@ -44,7 +44,7 @@
   "beacon": {
     "position_interval": 15,
     "telemetry_interval": 60,
-    "beacon_interval": 300,
+    "beacon_interval": 300
   },
 
   "temp": {
