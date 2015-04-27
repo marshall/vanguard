@@ -4,11 +4,11 @@ import struct
 import sys
 import unittest
 
-this_dir = os.path.abspath(os.path.dirname(__file__))
-vanguard_dir = os.path.abspath(os.path.join(this_dir, '..', 'vanguard'))
-sys.path.append(vanguard_dir)
+top_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(top_dir)
 
-import proto, hab_utils
+from vanguard.protocol import vanguard as proto
+from vanguard import hab_utils
 
 class MsgReaderTest(unittest.TestCase):
     def test_bad_start_marker(self):
@@ -18,17 +18,17 @@ class MsgReaderTest(unittest.TestCase):
 
     def test_bad_msg_type(self):
         reader = proto.MsgReader()
-        data = StringIO('\x9d\x9a' + ('\xff' * proto.Msg.header_end))
+        data = StringIO('\xa3\x9a' + ('\xff' * proto.Msg.header_end))
         self.assertRaises(proto.BadMsgType, lambda: reader.read(data))
 
     def test_bad_checksum(self):
         reader = proto.MsgReader()
-        data = StringIO('\x9d\x9a' + \
+        data = StringIO('\xa3\x9a' + \
                         struct.pack('!BB', proto.LocationMsg.TYPE,
                                            proto.LocationMsg.data_struct.size) + \
                         ('\xff' * 4) + \
                         ('\xff' * proto.LocationMsg.data_struct.size) + \
-                        '\x92\x95')
+                        '\x9b\x92')
 
         self.assertRaises(proto.BadChecksum, lambda: reader.read(data))
         self.assertEqual(reader.state, reader.state_header)
@@ -37,7 +37,7 @@ class MsgReaderTest(unittest.TestCase):
         reader = proto.MsgReader()
         data_bytes = '\xff' * proto.LocationMsg.data_struct.size
         data_crc = hab_utils.crc32(data_bytes)
-        data = StringIO('\x9d\x9a' + \
+        data = StringIO('\xa3\x9a' + \
                         struct.pack('!BBL', proto.LocationMsg.TYPE,
                                            proto.LocationMsg.data_struct.size,
                                            data_crc) + \
