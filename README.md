@@ -26,6 +26,8 @@ A detailed list of pin usage is maintained in [PINS.md](PINS.md)
 
 #### Software requirements
 
+##### BeagleBone Black setup
+
 - [Debian 7 with recent gnueabihf kernel](http://www.armhf.com/download/)
 - APT packages:
 
@@ -35,6 +37,26 @@ A detailed list of pin usage is maintained in [PINS.md](PINS.md)
         $ sudo pip install -r payload/requirements.txt
 - [Adafruit BBIO Python Library](https://learn.adafruit.com/setting-up-io-python-library-on-beaglebone-black/installation-on-ubuntu)
 - [NodeJS v0.10.16](http://www.armhf.com/node-js-for-the-beaglebone-black/)
+
+
+##### Dev environment setup
+
+1. Install gpsd and virtualenvwrapper
+
+    Linux w/ apt:
+
+        $ sudo apt-get install gpsd
+        $ sudo pip install virtualenvwrapper # globally
+
+    Mac OS X with Homebrew:
+
+        $ brew install gpsd python
+        $ pip install virtualenvwrapper # globally
+
+2. Virtualenv setup
+
+        $ mkvirtualenv -r payload/requirements.txt --system-site-packages vanguard
+        $ workon vanguard
 
 #### Configuration
 
