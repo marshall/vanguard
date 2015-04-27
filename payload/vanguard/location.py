@@ -26,6 +26,7 @@ class Location(Looper):
             try:
                 self.session = gps.gps(self.host, self.port,
                                        mode=gps.WATCH_ENABLE|gps.WATCH_NEWSTYLE)
+                self.redis.set('location_session_count', 0)
             except socket.error, e:
                 if self.session:
                     self.session.close()
@@ -39,10 +40,11 @@ class Location(Looper):
                         alt=report.get('alt', 0),
                         speed=report.get('speed', 0),
                         climb=report.get('climb', 0),
-                        time=report.get('time'))
+                        time=report.get('time', time.time()))
 
         location_str = json.dumps(location)
         self.redis.rpush('locations', location_str)
+        self.redis.incr('location_session_count')
 
     def on_stopped(self):
         self.log.info('gpsd has terminated')
@@ -56,11 +58,12 @@ class Location(Looper):
             return
 
         report = self.session.next()
-        self.log.debug(report)
 
         report_class = report.get('class')
         if report_class == 'TPV':
-            self.record_location(report)
+            tag = report.get('tag')
+            if tag == 'GGA': # fix
+                self.record_location(report)
 
     def on_cleanup(self):
         if self.session:
