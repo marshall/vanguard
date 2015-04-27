@@ -14,7 +14,7 @@ class VanguardLogger(logging.Logger):
     def message(self, msg):
         self.log(DATA, base64.b64encode(msg._buffer[:msg._buffer_len]))
 
-def setup(filename=DEFAULT_FILENAME):
+def setup(filename=DEFAULT_FILENAME, debug_stdout=False):
     logging.setLoggerClass(VanguardLogger)
     logging.addLevelName(DATA, 'DATA')
     formatter = logging.Formatter(fmt='[%(asctime)s][%(name)s:%(levelname)s] %(message)s')
@@ -23,7 +23,7 @@ def setup(filename=DEFAULT_FILENAME):
     root_logger.setLevel(DATA)
 
     stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setLevel(logging.INFO)
+    stdout_handler.setLevel(logging.INFO if not debug_stdout else logging.DEBUG)
     stdout_handler.setFormatter(formatter)
     root_logger.addHandler(stdout_handler)
 
