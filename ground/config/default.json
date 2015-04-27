@@ -1,0 +1,13 @@
+module.exports = {
+  devices: {
+    balloon: {
+      port: '/dev/tty.usbserial*',
+      baudrate: 9600,
+      parser: 'vanguard'
+    },
+    groundGPS: {
+      port: '/dev/tty.usbserial*',
+      baudrate: 9600,
+    }
+  }
+};

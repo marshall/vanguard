@@ -1,0 +1,45 @@
+{
+  "name": "vanguard-station",
+  "version": "0.0.1",
+  "description": "Vanguard ground station software",
+  "main": "index.js",
+  "scripts": {
+    "gulp": "gulp",
+    "test": "gulp test"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "babel": "^5.1.11",
+    "buffer-offset": "^0.1.1",
+    "commander": "^2.7.1",
+    "dissolve": "^0.3.3",
+    "lodash": "^3.6.0",
+    "nmea": "0.0.7",
+    "pouchdb": "^3.3.1",
+    "pouchdb-upsert": "^1.1.1",
+    "printf": "^0.2.1",
+    "promise": "^7.0.0",
+    "ref-struct": "^1.0.1",
+    "serialport": "^1.6.3",
+    "struct": "0.0.8",
+    "uuid": "^2.0.1",
+    "winston": "^1.0.0"
+  },
+  "devDependencies": {
+    "arrow-mocha": "^1.0.1",
+    "gulp": "^3.8.11",
+    "gulp-babel": "^5.1.0",
+    "gulp-mocha": "^2.0.1",
+    "gulp-nodeunit": "0.0.5",
+    "gulp-sourcemaps": "^1.5.2",
+    "gulp-watch": "^4.2.4",
+    "mocha": "^2.2.4",
+    "nodeunit": "^0.9.1",
+    "proxyquire": "^1.4.0",
+    "resumer": "0.0.0",
+    "sinon": "^1.14.1",
+    "source-map-support": "^0.2.10",
+    "unit.js": "^2.0.0"
+  }
+}
