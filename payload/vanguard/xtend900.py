@@ -28,7 +28,7 @@ class Xtend900(looper.Looper):
         self.address = '?'
         self.power_level = 0
 
-    def connect(self):
+    def start(self):
         UART.setup(self.uart)
         self.serial = serial.Serial(port=self.device,
                                     baudrate=self.baudrate,
@@ -172,7 +172,8 @@ class Xtend900(looper.Looper):
         self.log.info(str)
         self.write(str + '\r\n')
 
-    def write(self, str):
-        self.log.debug('>> %s', str.replace('\r\n', ''))
-        self.serial.write(str)
+    def write(self, data):
+        s = str(data)
+        self.log.debug('>> %s', s)
+        self.serial.write(s)
         self.serial.flush()

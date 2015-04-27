@@ -3,18 +3,20 @@ from cStringIO import StringIO
 import logging
 import struct
 
-import hab_utils
+from .. import hab_utils
 
-''' PEPPER-2 binary protocol
+''' Vanguard binary protocol: Network byte order (big endian)
 
-                   ord('P') + ord('M')  ord('S') + ord('G')
-bytes 0 .. 1     : 0x9d9a (begin msg)
-byte  2          : Message type (uint8_t)
-byte  3          : Length of data segment (uint8_t)
-bytes 4 .. 7     : CRC32 of data (uint32_t)
-bytes 8 .. N     : Message data
-                   ord('P') + ord('E')  ord('N') + ord('D')
-bytes N+1 .. N+2 : 0x9592 (end msg)
+                    ord('V') + ord('M')  ord('S') + ord('G')
+bytes 0  .. 1     : 0xa39a (begin msg - uint16_t)
+bytes 2  .. 6     : timestamp (40-bit unsigned integer - seconds since epoch)
+byte  7           : Message type (uint8_t)
+byte  8           : Length of data segment (uint8_t)
+bytes 9  .. 12    : CRC32 of data (uint32_t)
+bytes 13 .. N     : Message data
+
+                   ord('V') + ord('E')  ord('N') + ord('D')
+bytes N+1 .. N+2 : 0x9b92 (end msg - uint16_t)
 '''
 
 class BadMarker(Exception):
@@ -45,10 +47,10 @@ class Msg(object):
     data_struct = None
     data_attrs  = None
 
-    begin = 0x9d9a # 'PMSG'
+    begin = 0xa39a # 'VMSG'
     begin_len = 2
 
-    end = 0x9592 # 'PEND'
+    end = 0x9b92 # 'VEND'
     end_len = 2
 
     marker_struct = struct.Struct('!H')
@@ -346,3 +348,28 @@ class MsgReader(object):
             self.index = 0
             self.state = self.state_header
             raise
+
+class VanguardFormatter(object):
+    def __init__(self, **kwargs):
+        pass
+
+    def format_location(self, lat=0.0, lon=0.0, alt=0.0, speed=0, **kwargs):
+        msg = LocationMsg.from_data(latitude=lat,
+                                    longitude=lon,
+                                    altitude=alt,
+                                    speed=speed)
+        return msg.as_buffer()
+
+    def format_telemetry(self, packet_id, **kwargs):
+        msg = TelemetryMsg.from_data(
+            uptime=int(kwargs.get('uptime', 0)),
+            mode=0,
+            cpu_usage=int(kwargs.get('cpu_usage', 0)),
+            free_mem=int(kwargs.get('free_mem', 0) / 1024),
+            int_temperature=kwargs.get('int_temp', 0),
+            int_humidity=0,
+            ext_temperature=kwargs.get('ext_temp', 0))
+        return msg.as_buffer()
+
+    def format_packet(self, data):
+        return data
