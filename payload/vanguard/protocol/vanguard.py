@@ -2,6 +2,7 @@ from collections import namedtuple
 from cStringIO import StringIO
 import logging
 import struct
+import time
 
 from .. import hab_utils
 
@@ -9,11 +10,11 @@ from .. import hab_utils
 
                     ord('V') + ord('M')  ord('S') + ord('G')
 bytes 0  .. 1     : 0xa39a (begin msg - uint16_t)
-bytes 2  .. 6     : timestamp (40-bit unsigned integer - seconds since epoch)
-byte  7           : Message type (uint8_t)
-byte  8           : Length of data segment (uint8_t)
-bytes 9  .. 12    : CRC32 of data (uint32_t)
-bytes 13 .. N     : Message data
+bytes 2  .. 5     : timestamp (uint32_t - seconds since epoch)
+byte  6           : Message type (uint8_t)
+byte  7           : Length of data segment (uint8_t)
+bytes 8  .. 11    : CRC32 of data (uint32_t)
+bytes 12 .. N     : Message data
 
                    ord('V') + ord('E')  ord('N') + ord('D')
 bytes N+1 .. N+2 : 0x9b92 (end msg - uint16_t)
@@ -54,8 +55,8 @@ class Msg(object):
     end_len = 2
 
     marker_struct = struct.Struct('!H')
-    header_struct = struct.Struct('!BBL')
-    header_tuple  = namedtuple('Header', ['msg_type', 'msg_len', 'msg_crc32'])
+    header_struct = struct.Struct('!LBBL')
+    header_tuple  = namedtuple('Header', ['msg_timestamp', 'msg_type', 'msg_len', 'msg_crc32'])
 
     max_data_len = 255
     max_msg_len = begin_len + header_struct.size + end_len + max_data_len
@@ -138,8 +139,11 @@ class Msg(object):
     def pack_data(self, msg_data):
         msg_data = msg_data or ''
         self.marker_struct.pack_into(self._buffer, 0, self.begin)
-        self.header_struct.pack_into(self._buffer, self.begin_len, self.TYPE,
-                                     len(msg_data), hab_utils.crc32(msg_data))
+        self.header_struct.pack_into(self._buffer, self.begin_len,
+                                     time.time(),
+                                     self.TYPE,
+                                     len(msg_data),
+                                     hab_utils.crc32(msg_data))
 
         data_end = self.header_end + len(msg_data)
         self._buffer[self.header_end:data_end] = msg_data
@@ -183,7 +187,7 @@ class Msg(object):
         return getattr(attrs, attr)
 
     def validate_data(self):
-        msg_type, msg_len, msg_crc32 = self._get_header()
+        msg_timestamp, msg_type, msg_len, msg_crc32 = self._get_header()
         self.data_view = buffer(self._buffer, self.header_end, msg_len)
         crc32 = hab_utils.crc32(self.data_view)
         if crc32 != msg_crc32:
@@ -198,6 +202,10 @@ class Msg(object):
     @property
     def msg_header(self):
         return self._get_header()
+
+    @property
+    def msg_timestamp(self):
+        return self.msg_header.msg_timestamp
 
     @property
     def msg_type(self):

@@ -4,6 +4,8 @@ import struct
 import sys
 import unittest
 
+import mock
+
 top_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(top_dir)
 
@@ -24,7 +26,8 @@ class MsgReaderTest(unittest.TestCase):
     def test_bad_checksum(self):
         reader = proto.MsgReader()
         data = StringIO('\xa3\x9a' + \
-                        struct.pack('!BB', proto.LocationMsg.TYPE,
+                        struct.pack('!LBB', 0,
+                                           proto.LocationMsg.TYPE,
                                            proto.LocationMsg.data_struct.size) + \
                         ('\xff' * 4) + \
                         ('\xff' * proto.LocationMsg.data_struct.size) + \
@@ -38,9 +41,10 @@ class MsgReaderTest(unittest.TestCase):
         data_bytes = '\xff' * proto.LocationMsg.data_struct.size
         data_crc = hab_utils.crc32(data_bytes)
         data = StringIO('\xa3\x9a' + \
-                        struct.pack('!BBL', proto.LocationMsg.TYPE,
-                                           proto.LocationMsg.data_struct.size,
-                                           data_crc) + \
+                        struct.pack('!LBBL', 0,
+                                             proto.LocationMsg.TYPE,
+                                             proto.LocationMsg.data_struct.size,
+                                             data_crc) + \
                         data_bytes + \
                         '\xff\xff')
 
@@ -50,7 +54,7 @@ class LocationMsgTest(unittest.TestCase):
     def setUp(self):
         self.location_data = proto.LocationMsg.data_struct.pack(1.1, 2.2, 3.3, 100, 5, 2)
         self.data = proto.Msg.marker_struct.pack(proto.Msg.begin) + \
-               proto.Msg.header_struct.pack(proto.LocationMsg.TYPE,
+               proto.Msg.header_struct.pack(0, proto.LocationMsg.TYPE,
                                             proto.LocationMsg.data_struct.size,
                                             hab_utils.crc32(self.location_data)) + \
                self.location_data + \
@@ -69,6 +73,7 @@ class LocationMsgTest(unittest.TestCase):
             self.assertEqual(msg.speed, 2)
             self.assertSequenceEqual(msg.as_buffer(), self.data)
 
+    @mock.patch('time.time', mock.MagicMock(return_value=0))
     def test_build(self):
         location_msg = proto.LocationMsg.from_data(latitude=1.1, longitude=2.2,
                                                    altitude=3.3, quality=100,
@@ -78,9 +83,10 @@ class LocationMsgTest(unittest.TestCase):
 class SendTextMsgTest(unittest.TestCase):
     def setUp(self):
         self.data = proto.Msg.marker_struct.pack(proto.Msg.begin) + \
-                    proto.Msg.header_struct.pack(proto.SendTextMsg.TYPE, 0, 0) + \
+                    proto.Msg.header_struct.pack(0, proto.SendTextMsg.TYPE, 0, 0) + \
                     proto.Msg.marker_struct.pack(proto.Msg.end)
 
+    @mock.patch('time.time', mock.MagicMock(return_value=0))
     def runTest(self):
         msg = proto.SendTextMsg.from_data()
         self.assertSequenceEqual(msg.as_buffer(), self.data)

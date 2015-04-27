@@ -12,11 +12,11 @@ import util from 'util';
  *
  *                    ord('V') + ord('M')  ord('S') + ord('G')
  * bytes 0  .. 1     : 0xa39a (begin msg - uint16_t)
- * bytes 2  .. 6     : timestamp (40-bit unsigned integer - seconds since epoch)
- * byte  7           : Message type (uint8_t)
- * byte  8           : Length of data segment (uint8_t)
- * bytes 9  .. 12    : CRC32 of data (uint32_t)
- * bytes 13 .. N     : Message data
+ * bytes 2  .. 5     : timestamp (uint32_t - seconds since epoch)
+ * byte  6           : Message type (uint8_t)
+ * byte  7           : Length of data segment (uint8_t)
+ * bytes 8  .. 11    : CRC32 of data (uint32_t)
+ * bytes 12 .. N     : Message data
  *
  *                    ord('V') + ord('E')  ord('N') + ord('D')
  * bytes N+1 .. N+2 : 0x9b92 (end msg - uint16_t)
@@ -25,7 +25,7 @@ import util from 'util';
 export const BEGIN          = 0xa39a;
 export const END            = 0x9b92;
 export const MARKER_SIZE    = 2;
-export const TIMESTAMP_SIZE = 5;
+export const TIMESTAMP_SIZE = 4;
 export const MSG_TYPE_SIZE  = 1;
 export const LENGTH_SIZE    = 1;
 export const CRC32_SIZE     = 4;
@@ -46,8 +46,7 @@ export const TELEMETRY_SIZE         = 20;
 export const PHOTO_DATA_HEADER_SIZE = 10;
 
 let Header = Struct().word16Ube('begin')
-                     .word32Ube('ts1')
-                     .word8Ube('ts2')
+                     .word32Ube('timestamp')
                      .word8('type')
                      .word8('dataLength')
                      .word32Ube('crc32');
@@ -70,12 +69,7 @@ export class Parser extends Dissolve {
   }
 
   parseTimestamp() {
-    this.buffer('timestamp_buffer', 5).tap(() => {
-      let ts1 = this.vars.timestamp_buffer.readUInt32BE(0);
-      let ts2 = this.vars.timestamp_buffer.readUInt8(4);
-      delete this.vars.timestamp_buffer;
-
-      this.vars.timestamp = (ts1 << 8) | ts2;
+    this.uint32be('timestamp').tap(() => {
       this.parseMessage();
     });
   }
@@ -130,9 +124,13 @@ export class Parser extends Dissolve {
   }
 
   push(msg) {
-    let data = _.omit(msg, 'begin', 'timestamp_buffer', 'type', 'size',
-                           'crc32');
-    switch (msg.type) {
+    if (!msg) {
+      return super.push(msg);
+    }
+
+    let type = msg.type;
+    let data = _.omit(msg, 'begin', 'timestamp', 'type', 'size', 'crc32');
+    switch (type) {
       case MSG_TYPE_LOCATION:
         super.push(new Location(data));
         break;
@@ -168,14 +166,12 @@ export class Message extends Buffer {
 
   getTimestamp() {
     Header._setBuff(this);
-    return (Header.fields.ts1 << 8) |
-           (Header.fields.ts2 & 0xff);
+    return Header.fields.timestamp;
   }
 
   setTimestamp(value) {
     Header._setBuff(this);
-    Header.fields.ts1 = value & 0xffffffff;
-    Header.fields.ts2 = (value << 32) | 0xff;
+    Header.fields.timestamp = value;
   }
 
   getData() {
