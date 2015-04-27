@@ -119,19 +119,17 @@ class Beacon(Interval):
         self.redis.incr('telemetry') 
 
     def collect_telemetry(self):
-	telemetry = dict()
-	data = self.redis.lindex('temps', -1)
-	stats = self.update_stats()
-	if stats:
-	     telemetry.update(stats)
+        telemetry = dict()
+        stats = self.update_stats()
+        if stats:
+            telemetry.update(stats)
+
+        data = self.redis.lindex('temps', -1)
         if data:
-             temps = json.loads(data)
-	     telemetry["int_temp"] = temps['int']
-        
-	
-	self.send_telemetry(**telemetry)
-        
-       
+            temps = json.loads(data)
+            telemetry['int_temp'] = temps['int']
+
+        self.send_telemetry(**telemetry)
 
     def on_interval(self):
         data = self.redis.lindex('locations', -1)
@@ -142,17 +140,13 @@ class Beacon(Interval):
         self.send_location(**location)
 
         if self.telemetry_count % self.telemetry_multiple == 0:
-		self.collect_telemetry()
-		self.telemetry_count += 1
-
+            self.collect_telemetry()
+            self.telemetry_count += 1
 
     def update_stats(self):
         try:
-	    sys_helper = os.path.join(os.path.dirname(__file__),'sys_helper.sh')
+            sys_helper = os.path.join(os.path.dirname(__file__), 'sys_helper.sh')
             result = subprocess.check_output([sys_helper, 'get_stats'])
-
             return json.loads(result)
-
         except subprocess.CalledProcessError, e:
             return None
-

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# helper script for pepper2
+# helper script for vanguard
 #
 
 this_dir=$(cd "`dirname "$0"`"; pwd)
