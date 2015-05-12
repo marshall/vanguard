@@ -19,16 +19,15 @@ class AltitudeChart extends Pane {
     this.chart = new contrib.line({});
     this.lastUpdate = moment.duration(0);
     this.main.append(this.chart);
+
+    this.on('telemetry', t => { this.uptime = t.uptime; });
+    this.on('location', p => this.onPosition(p));
   }
 
-  onTelemetry(telemetry) {
-    this.uptime = telemetry.uptime;
-  }
-
-  onLocation(position) {
+  onPosition(position) {
     let uptime = moment.duration(this.uptime || 0, 'seconds');
     let uptimeCopy = moment.duration(uptime.asMilliseconds());
-    if (uptimeCopy.subtract(this.lastUpdate).asSeconds() < 30) {
+    if (uptimeCopy.subtract(this.lastUpdate).asSeconds() < 10) {
       return;
     }
 

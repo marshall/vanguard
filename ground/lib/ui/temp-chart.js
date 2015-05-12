@@ -32,7 +32,7 @@ class TempChart extends Pane {
   onTelemetry(telemetry) {
     let uptime = moment.duration(telemetry.uptime || 0, 'seconds');
     let uptimeCopy = moment.duration(uptime.asMilliseconds());
-    if (uptimeCopy.subtract(this.lastUpdate).asSeconds() < 30) {
+    if (uptimeCopy.subtract(this.lastUpdate).asSeconds() < 10) {
       return;
     }
 
