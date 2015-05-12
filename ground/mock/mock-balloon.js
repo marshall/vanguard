@@ -2,9 +2,12 @@ import { install } from 'source-map-support';
 install();
 
 import _ from 'lodash';
-import program from 'commander';
-import * as vanguard from '../lib/parsers/vanguard';
 import BufferOffset from 'buffer-offset';
+import bunyan from 'bunyan';
+import nlj from 'newline-json';
+import program from 'commander';
+
+import * as vanguard from '../lib/parsers/vanguard';
 import MockData from './mock-data';
 
 class VgFormatter {
@@ -16,6 +19,8 @@ class VgFormatter {
         return new Buffer(vanguard.Message.fromTelemetry(data));
       case 'photo-data':
         return new Buffer(vanguard.Message.fromPhotoData(data));
+      case 'pong':
+        return new Buffer(vanguard.Message.fromPong(data));
     }
   }
 }
@@ -60,13 +65,17 @@ class MockBalloon {
     this.mockData = new MockData();
     this.timers = [];
     this.formatter = FORMATTERS[program.output] || FORMATTERS.vanguard;
+
+    let parser = new vanguard.Parser();
+    parser.on('data', data => this.handleMessage(data));
+    process.stdin.pipe(parser);
   }
 
   start() {
-    this.timers.push(setInterval(() => { this.mockData.nextData() }, 1000));
-    this.timers.push(setInterval(() => { this.nextLocation() }, LOCATION_INTERVAL));
-    this.timers.push(setInterval(() => { this.nextTelemetry() }, TELEMETRY_INTERVAL));
-    this.timers.push(setInterval(() => { this.nextPhotoData() }, PHOTO_DOWNLOAD_INTERVAL));
+    this.timers.push(setInterval(() => this.mockData.nextData(), 1000));
+    this.timers.push(setInterval(() => this.nextLocation(), LOCATION_INTERVAL));
+    this.timers.push(setInterval(() => this.nextTelemetry(), TELEMETRY_INTERVAL));
+    this.timers.push(setInterval(() => this.nextPhotoData(), PHOTO_DOWNLOAD_INTERVAL));
   }
 
   stop() {
@@ -109,6 +118,15 @@ class MockBalloon {
     this.dumpData(_.merge(this.mockData.mockPhotoData, {
       type: 'photo-data'
     }));
+  }
+
+  handleMessage(msg) {
+    switch (msg.type) {
+      case 'ping':
+        msg.type = 'pong';
+        this.dumpData(msg);
+        break;
+    }
   }
 }
 
