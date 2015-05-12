@@ -1,8 +1,9 @@
 import _ from 'lodash';
 import assert from 'assert';
 import BufferOffset from 'buffer-offset';
+import crc32 from 'buffer-crc32';
 import Dissolve from 'dissolve';
-import { Location, PhotoData, Telemetry } from '../messages';
+import { sprintf } from 'sprintf-js';
 import Struct from 'struct';
 import { Transform } from 'stream';
 import util from 'util';
@@ -40,10 +41,13 @@ export const MSG_TYPE_TELEMETRY        = 1;
 export const MSG_TYPE_PHOTO_DATA       = 3;
 export const MSG_TYPE_START_PHOTO_DATA = 10;
 export const MSG_TYPE_STOP_PHOTO_DATA  = 11;
+export const MSG_TYPE_PING             = 12;
+export const MSG_TYPE_PONG             = 13;
 
 export const LOCATION_SIZE          = 26;
 export const TELEMETRY_SIZE         = 20;
 export const PHOTO_DATA_HEADER_SIZE = 10;
+export const PING_PONG_SIZE         = 4;
 
 let Header = Struct().word16Ube('begin')
                      .word32Ube('timestamp')
@@ -54,6 +58,7 @@ let Header = Struct().word16Ube('begin')
 export class Parser extends Dissolve {
   constructor() {
     super();
+    this.discard = '';
     this.loop(end => {
       this.parse();
     });
@@ -62,7 +67,14 @@ export class Parser extends Dissolve {
   parse() {
     this.uint16be('begin').tap(() => {
       if (this.vars.begin !== BEGIN) {
+        this.discard += String.fromCharCode(this.vars.begin >> 8);
+        this.discard += String.fromCharCode(this.vars.begin & 0xff);
         return;
+      }
+
+      if (this.discard.length > 0) {
+        console.log(this.discard);
+        this.discard = '';
       }
       this.parseTimestamp();
     });
@@ -90,6 +102,7 @@ export class Parser extends Dissolve {
               .uint8('quality')
               .uint8('satellites')
               .floatbe('speed')
+              .uint16be('end')
               .pushMessage();
           break;
 
@@ -102,6 +115,7 @@ export class Parser extends Dissolve {
               .floatbe('intTemp')
               .floatbe('intHumidity')
               .floatbe('extTemp')
+              .uint16be('end')
               .pushMessage();
           break;
 
@@ -111,8 +125,16 @@ export class Parser extends Dissolve {
               .uint16be('chunkCount')
               .uint32be('fileSize')
               .buffer('data', this.vars.size - 10)
+              .uint16be('end')
               .pushMessage();
           break;
+
+      case MSG_TYPE_PING:
+      case MSG_TYPE_PONG:
+        this.uint32be('magic')
+            .uint16be('end')
+            .pushMessage();
+        break;
     }
   }
 
@@ -129,18 +151,16 @@ export class Parser extends Dissolve {
     }
 
     let type = msg.type;
-    let data = _.omit(msg, 'begin', 'timestamp', 'type', 'size', 'crc32');
-    switch (type) {
-      case MSG_TYPE_LOCATION:
-        super.push(new Location(data));
-        break;
-      case MSG_TYPE_TELEMETRY:
-        super.push(new Telemetry(data));
-        break;
-      case MSG_TYPE_PHOTO_DATA:
-        super.push(new PhotoData(data));
-        break;
-    }
+    let data = _.omit(msg, 'type', 'begin', 'end');
+
+    data.type = {
+        [MSG_TYPE_LOCATION]: 'location',
+        [MSG_TYPE_TELEMETRY]: 'telemetry',
+        [MSG_TYPE_PHOTO_DATA]: 'photo-data',
+        [MSG_TYPE_PING]: 'ping',
+        [MSG_TYPE_PONG]: 'pong'
+    }[type];
+    super.push(data);
   }
 }
 
@@ -174,12 +194,23 @@ export class Message extends Buffer {
     Header.fields.timestamp = value;
   }
 
+  getCRC32() {
+    Header._setBuff(this);
+    return Header.fields.crc32;
+  }
+
+  setCRC32(value) {
+    Header._setBuff(this);
+    Header.fields.crc32 = value;
+  }
+
   getData() {
     return this.slice(DATA_BEGIN, DATA_BEGIN + this.getDataLength());
   }
 
   setData(value) {
     value.copy(this, DATA_BEGIN, 0, this.getDataLength());
+    this.setCRC32(crc32.unsigned(this.getData()));
   }
 
   getDataLength() {
@@ -225,5 +256,21 @@ export class Message extends Buffer {
     data.append(photoData.data);
     msg.setData(data);
     return msg;
+  }
+
+  static fromPingPong(type, pingData) {
+    let msg = new Message(PING_PONG_SIZE, { type: type });
+    let data = new BufferOffset(PING_PONG_SIZE);
+    data.appendUInt32BE(pingData.magic);
+    msg.setData(data);
+    return msg;
+  }
+
+  static fromPing(data) {
+    return Message.fromPingPong(MSG_TYPE_PING, data);
+  }
+
+  static fromPong(data) {
+    return Message.fromPingPong(MSG_TYPE_PONG, data);
   }
 }

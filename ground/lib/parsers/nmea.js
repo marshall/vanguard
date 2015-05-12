@@ -1,4 +1,3 @@
-import { Location, Telemetry } from '../messages';
 import nmea from 'nmea';
 import nmeaHelpers from 'nmea/helpers';
 import serialport from 'serialport';
@@ -65,13 +64,13 @@ export class Parser extends Transform {
     let normalized = data;
     switch (data.type) {
       case 'fix':
-        normalized = new Location({
-          lat: nmeaHelpers.parseLatitude(data.lat, data.latPole),
-          lon: nmeaHelpers.parseLongitude(data.lon, data.lonPole),
-          alt: nmeaHelpers.parseAltitude(data.alt, data.altUnit),
+        normalized = {
+          lat: parseFloat(nmeaHelpers.parseLatitude(data.lat, data.latPole)),
+          lon: parseFloat(nmeaHelpers.parseLongitude(data.lon, data.lonPole)),
+          alt: parseFloat(nmeaHelpers.parseAltitude(data.alt, data.altUnit)),
           timestamp: data.timestamp,
           satellites: data.numSat
-        });
+        };
         break;
     }
     super.push(normalized);
