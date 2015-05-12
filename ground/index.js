@@ -15,11 +15,10 @@ program
   .option('-gb, --gps-baud <baudrate>', 'GPS baudrate [9600]', '9600')
   .option('-u, --remote-url <address>', 'Remote CouchDB base URL to sync with')
   .option('-v, --verbose', 'Enable verbose logging', false)
+  .option('-m, --mock', 'Use mock balloon', false)
   .parse(process.argv);
 
 log.setVerbosity(program.verbose ? 1 : 0);
 
-log.info('new station');
 var station = new Station(program);
-log.info('start');
 station.start();

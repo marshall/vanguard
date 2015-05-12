@@ -1,42 +1,84 @@
 import _ from 'lodash';
 import { EventEmitter } from 'events';
 import fs from 'fs';
-import log from './log';
+import net from 'net';
+import nlj from 'newline-json';
 import nmea from 'nmea';
 import os from 'os';
 import path from 'path';
 import Promise from 'promise';
 import serialport, { SerialPort } from 'serialport';
-import TrackDB from './trackdb';
+import { spawn, fork } from 'child_process';
 import util from 'util';
 import uuid from 'uuid';
 
-import { Parser as VgParser } from './parsers/vanguard';
+import log from './log';
+import { Parser as VgParser, Message } from './parsers/vanguard';
 import { Parser as NmeaParser } from './parsers/nmea';
+import * as repl from './repl';
+import TrackDB from './trackdb';
 
 export class Station extends EventEmitter {
   constructor(options) {
     super();
 
-    log.info('station ctor');
-    if (!options) options = {};
+    this.lastMsg = {__all__: null};
 
+    options = _.defaults(options || {}, {
+      mock: false,
+      radio: null,
+      radioBaud: 9600,
+      gps: null,
+      gpsBaud: 9600,
+      remoteUrl: null,
+      serverPort: 41001,
+      replPort: 41002
+    });
+
+    this.mock = options.mock;
     this.radioDevice = options.radio;
-    this.readStdin = this.radioDevice === '-';
     this.radioBaud = parseInt(options.radioBaud);
     this.gpsDevice = options.gps;
     this.gpsBaud = parseInt(options.gpsBaud);
+    this.serverPort = parseInt(options.serverPort);
+    this.replPort = parseInt(options.replPort);
 
     this.trackDB = new TrackDB(this, {
       remoteURL: options.remoteUrl
     });
+
+    this.startServers();
+    log.info('Ground station listening');
+  }
+
+  startServers() {
+    this.connections = [];
+    var self = this;
+    this.server = net.createServer(function(conn) {
+      conn.on('close', () => _.remove(self.connections, conn));
+      self.connections.push(conn);
+    });
+    this.server.listen(this.serverPort);
+    this.replServer = repl.listen(this, this.replPort);
+  }
+
+  onExit() {
+    this.connections.forEach(conn => {
+      conn.end();
+    });
+
+    if (this.server) {
+      this.server.close();
+    }
+
+    if (this.replServer) {
+      this.replServer.close();
+    }
   }
 
   checkRadio() {
-    log.info('check radio');
     return new Promise((resolve, reject) => {
-      if (this.radioDevice) {
-        log.info('should resolve');
+      if (this.radioDevice || this.mock) {
         resolve(this.radioDevice);
         return;
       }
@@ -79,8 +121,18 @@ export class Station extends EventEmitter {
   openRadio() {
     return new Promise((resolve, reject) => {
       if (this.radioDevice === '-') {
-        this.radioStream = process.stdin;
-        process.stdin.on('readable', resolve);
+        this.radioIn = process.stdin;
+        this.radioOut = null;
+        process.stdin.once('readable', resolve);
+        return;
+      }
+
+      if (this.mock) {
+        let proc = spawn(process.execPath,
+                         [__dirname + '/../mock/mock-balloon.js']);
+        this.radioIn = proc.stdout;
+        this.radioOut = proc.stdin;
+        resolve();
         return;
       }
 
@@ -88,7 +140,7 @@ export class Station extends EventEmitter {
       var port = new SerialPort(this.radioDevice, {
         baudrate: this.radioBaud
       });
-      this.radioStream = port;
+      this.radioOut = this.radioIn = port;
       port.on('open', resolve);
     });
   }
@@ -113,7 +165,7 @@ export class Station extends EventEmitter {
     this.checkRadio()
         .then(this.openRadio())
         .then(() => {
-          this.startParser(this.radioStream, 'radio', VgParser);
+          this.startParser(this.radioIn, 'radio', VgParser);
         })
         .catch(err => {
           log.error(err);
@@ -131,10 +183,8 @@ export class Station extends EventEmitter {
   }
 
   startParser(stream, source, Parser) {
-    log.info('start parser');
     var parser = new Parser();
     parser.on('data', data => {
-      log.info('got data', data);
       this.handleMessage(source, data);
     });
 
@@ -142,9 +192,45 @@ export class Station extends EventEmitter {
   }
 
   handleMessage(source, msg) {
+    this.lastMsg.__all__ = msg;
+    this.lastMsg[msg.type] = msg;
+
     msg.source = source;
-    log.debug(util.format('[%s]<-%s: %j', source, msg.type, msg));
+    log.debug(msg, 'received');
 
     this.emit('message', msg);
+    this._broadcast(msg);
+  }
+
+  _broadcast(msg) {
+    this.connections.forEach(conn => {
+      conn.write(JSON.stringify(msg) + '\n');
+    });
+  }
+
+  getLastMessage(type) {
+    return this.lastMsg[type || '__all__'];
+  }
+
+  ping(magic) {
+    return new Promise((resolve, reject) => {
+      if (!this.radioOut) {
+        reject('Radio output not connected');
+        return;
+      }
+
+      var self = this;
+      this.on('message', function handler(msg) {
+        if (msg.type === 'pong' && msg.magic === magic) {
+          self.removeListener('message', handler);
+          resolve(msg);
+        }
+      });
+
+      this.radioOut.write(new Buffer(Message.fromPing({ magic })));
+    });
+  }
+
+  upload(path) {
   }
 };
