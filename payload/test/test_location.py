@@ -24,7 +24,7 @@ class GpsFake(threading.Thread):
 
     def run(self):
         gps_log = os.path.join(this_dir, 'gps.log')
-        cmd = ['gpsfake', '-c', '0.01', gps_log]
+        cmd = ['gpsfake', '-u', '-c', '0.01', gps_log]
         logger.info(cmd)
 
         self.proc = subprocess.Popen(cmd)

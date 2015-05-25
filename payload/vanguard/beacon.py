@@ -2,6 +2,7 @@ import collections
 import datetime
 import json
 import re
+import threading
 import time
 
 import redis
@@ -12,13 +13,17 @@ import sys
 import subprocess
 
 from command import command
-from looper import Interval
+from looper import Looper
 from radio import Radio
+from handler import *
 
 @command('beacon')
-class Beacon(Interval):
+class Beacon(Looper):
+    handler_types = [PingHandler]
+
     def __init__(self, config):
-        super(Beacon, self).__init__(interval=config.beacon.position_interval)
+        super(Beacon, self).__init__()
+        self.interval = config.beacon.position_interval
         self.beacon = config.beacon
         self.telemetry_multiple = config.beacon.telemetry_interval / \
                                   config.beacon.position_interval
@@ -26,6 +31,7 @@ class Beacon(Interval):
         self.telemetry_count = 0
         self.radios = collections.OrderedDict({})
 
+        self.handlers = [handler() for handler in self.handler_types]
         for key, radio_config in config.radios.iteritems():
             self.radios[key] = Radio(**radio_config)
 
@@ -83,12 +89,26 @@ class Beacon(Interval):
 
         return stats
 
-    def read_uptime(self, path='/proc/uptime'):
-        with open(path, 'r'):
-            return float(f.readline().split()[0])
+    def handle_packet(self, radio, packet):
+        # Vanguard message received from ground station
+        for handler in self.handlers:
+            if handler.msg_type == packet.msg_type:
+                handler.handle(radio, packet)
+                break
 
-    def on_interval(self):
+    def on_started(self):
+        for radio in self.radios.values():
+            if radio.protocol == 'vanguard':
+                radio.start()
+
+    def on_iteration(self):
         self.send_location()
         if self.telemetry_count % self.telemetry_multiple == 0:
             self.send_telemetry()
-            self.telemetry_count += 1
+        self.telemetry_count += 1
+
+        for radio in self.radios.values():
+            if radio.protocol == 'vanguard':
+                packet = radio.recv(self.interval)
+                if packet:
+                    self.handle_packet(radio, packet)

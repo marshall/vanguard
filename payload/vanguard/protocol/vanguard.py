@@ -264,25 +264,20 @@ class PhotoDataMsg(Msg):
 @msg_type(10)
 class StartPhotoDataMsg(Msg):
     data_struct = struct.Struct('!H')
-    data_attrs = (('index', 0))
+    data_attrs = (('index', 0), )
 
 @msg_type(11)
 class StopPhotoDataMsg(Msg):
     pass
 
 @msg_type(12)
-class SendTextMsg(Msg):
-    pass
+class PingMsg(Msg):
+    data_struct = struct.Struct('!L')
+    data_attrs = (('magic', 0), )
 
 @msg_type(13)
-class AddPhoneNumberMsg(Msg):
-    @classmethod
-    def from_phone_number(cls, phone_number):
-        return cls(msg_data=struct.pack('!%ds' % len(phone_number), phone_number))
-
-    @property
-    def phone_number(self):
-        return str(self.msg_data[:])
+class PongMsg(PingMsg):
+    pass
 
 class MsgReader(object):
     state_header = 0
@@ -377,6 +372,10 @@ class VanguardFormatter(object):
             int_temperature=kwargs.get('int_temp', 0),
             int_humidity=0,
             ext_temperature=kwargs.get('ext_temp', 0))
+        return msg.as_buffer()
+
+    def format_pong(self, magic, **kwargs):
+        msg = PongMsg.from_data(magic=magic)
         return msg.as_buffer()
 
     def format_packet(self, data):

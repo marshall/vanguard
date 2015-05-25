@@ -1,7 +1,9 @@
 import json
 import logging
 import os
+from StringIO import StringIO
 import sys
+import time
 import unittest
 
 import mock
@@ -51,8 +53,10 @@ class BeaconTest(unittest.TestCase):
         self.vanguard = vanguard
         self.vanguard_proto = self.vanguard.protocol.vanguard
         self.aprs_proto = self.vanguard.protocol.aprs
+
         self.beacon = vanguard.beacon.Beacon(self.config)
         self.redis = self.beacon.redis
+
         self.addCleanup(self.module_patcher.stop)
 
     def test_radios(self):
@@ -74,21 +78,25 @@ class BeaconTest(unittest.TestCase):
         self.assertEqual(s.path, 'PATH')
 
     def test_location(self):
+
         self.redis.rpush('locations', '{"time": "2015-01-05T22:27:35.412Z", "lat": 12, "lon": 34, "alt": 56, "track": 1.23, "speed": 12.34}')
         primary_write = self.beacon.radios['primary'].device.write = mock.MagicMock()
         secondary_write = self.beacon.radios['secondary'].device.write = mock.MagicMock()
+
         self.beacon.send_location()
 
-        self.assertTrue(primary_write.called)
-        self.assertTrue(secondary_write.called)
-        primary_write.assert_called_with(self.vanguard_proto.LocationMsg.from_data(
-                                           latitude=12,
-                                           longitude=34,
-                                           altitude=56,
-                                           speed=12.34).as_buffer())
+        primary_tx_buffer = self.beacon.radios['primary'].tx_buffer
+        secondary_tx_buffer = self.beacon.radios['secondary'].tx_buffer
+
+        self.assertEqual(primary_tx_buffer[-1],
+                         self.vanguard_proto.LocationMsg.from_data(
+                             latitude=12,
+                             longitude=34,
+                             altitude=56,
+                             speed=12.34).as_buffer())
 
         aprs_formatter = self.aprs_proto.APRSFormatter(callsign='ABCD-1', path='PATH')
-        secondary_write.assert_called_with(aprs_formatter.format_packet(
+        self.assertEqual(secondary_tx_buffer[-1], aprs_formatter.format_packet(
             '/222735h1200.00N/03400.00EO001/044/A=000184'))
 
     def test_telemetry(self):
@@ -109,21 +117,47 @@ class BeaconTest(unittest.TestCase):
         with mock.patch.object(__builtin__, 'open', mock_open):
             self.beacon.send_telemetry()
 
-        self.assertTrue(primary_write.called)
-        self.assertTrue(secondary_write.called)
+        primary_tx_buffer = self.beacon.radios['primary'].tx_buffer
+        secondary_tx_buffer = self.beacon.radios['secondary'].tx_buffer
 
-        primary_write.assert_called_with(self.vanguard_proto.TelemetryMsg.from_data(
-                uptime=1147,
-                mode=0,
-                cpu_usage=3,
-                free_mem=231,
-                int_temperature=23,
-                int_humidity=0,
-                ext_temperature=45).as_buffer())
+        self.assertEqual(primary_tx_buffer[-1],
+                         self.vanguard_proto.TelemetryMsg.from_data(
+                            uptime=1147,
+                            mode=0,
+                            cpu_usage=3,
+                            free_mem=231,
+                            int_temperature=23,
+                            int_humidity=0,
+                            ext_temperature=45).as_buffer())
 
         aprs_formatter = self.aprs_proto.APRSFormatter(callsign='ABCD-1', path='PATH')
-        secondary_write.assert_called_with(aprs_formatter.format_packet(
+        self.assertEqual(secondary_tx_buffer[-1], aprs_formatter.format_packet(
             'T#000,023,045,003,231,019,00000000'))
+
+    def test_ping(self):
+        buf = self.vanguard_proto.PingMsg.from_data(magic=0x1234).as_buffer()
+        f = StringIO(buf)
+
+        def custom_read(n):
+            return f.read(n)
+
+        primary_radio = self.beacon.radios['primary']
+        primary_radio.device.read = custom_read
+        primary_radio.device.write = mock.MagicMock()
+        primary_radio.start()
+
+        self.beacon.handle_packet = mock.MagicMock()
+        self.beacon.send_telemetry = mock.MagicMock()
+        self.beacon.send_location = mock.MagicMock()
+        self.beacon.on_iteration()
+
+        calls = self.beacon.handle_packet.mock_calls
+        radio, msg = calls[0][1]
+
+        self.assertTrue(self.beacon.handle_packet.called)
+        self.assertEqual(radio, primary_radio)
+        self.assertEqual(msg.as_buffer(),
+            self.vanguard_proto.PingMsg.from_data(magic=0x1234).as_buffer())
 
 if __name__ == '__main__':
     unittest.main()

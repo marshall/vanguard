@@ -12,6 +12,9 @@ class Looper(object):
     def on_interrupt(self):
         pass
 
+    def on_started(self):
+        pass
+
     def on_stopped(self):
         pass
 
@@ -20,6 +23,8 @@ class Looper(object):
 
     def main(self):
         self.running = True
+        self.on_started()
+
         while self.running:
             try:
                 self.on_iteration()

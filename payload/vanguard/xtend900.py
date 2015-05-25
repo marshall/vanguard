@@ -32,7 +32,7 @@ class Xtend900(looper.Looper):
         UART.setup(self.uart)
         self.serial = serial.Serial(port=self.device,
                                     baudrate=self.baudrate,
-                                    timeout=5)
+                                    timeout=1)
         self.connected = True
 
         #with self.command_mode():
@@ -177,3 +177,6 @@ class Xtend900(looper.Looper):
         self.log.debug('>> %s', s)
         self.serial.write(s)
         self.serial.flush()
+
+    def read(self, n):
+        return self.serial.read(n)

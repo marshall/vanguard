@@ -80,15 +80,19 @@ class LocationMsgTest(unittest.TestCase):
                                                    satellites=5, speed=2)
         self.assertSequenceEqual(location_msg.as_buffer(), self.data)
 
-class SendTextMsgTest(unittest.TestCase):
+class PingMsgTest(unittest.TestCase):
     def setUp(self):
+        self.ping_data = proto.PingMsg.data_struct.pack(0x1234)
         self.data = proto.Msg.marker_struct.pack(proto.Msg.begin) + \
-                    proto.Msg.header_struct.pack(0, proto.SendTextMsg.TYPE, 0, 0) + \
+                    proto.Msg.header_struct.pack(0, proto.PingMsg.TYPE,
+                                                 proto.PingMsg.data_struct.size,
+                                                 hab_utils.crc32(self.ping_data)) + \
+                    self.ping_data + \
                     proto.Msg.marker_struct.pack(proto.Msg.end)
 
     @mock.patch('time.time', mock.MagicMock(return_value=0))
     def runTest(self):
-        msg = proto.SendTextMsg.from_data()
+        msg = proto.PingMsg.from_data(magic=0x1234)
         self.assertSequenceEqual(msg.as_buffer(), self.data)
 
 if __name__ == '__main__':
