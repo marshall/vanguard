@@ -1,3 +1,4 @@
+import base64
 import logging
 import kiss
 import threading
@@ -13,6 +14,7 @@ class Radio(threading.Thread):
                        device='/dev/ttyO5', baudrate=9600, uart='UART5',
                        **kwargs):
         super(Radio, self).__init__()
+        self.log = logging.getLogger('radio.' + type)
         self.rx_lock = threading.Lock()
         self.rx_event = threading.Event()
         self.rx_buffer = []
@@ -64,9 +66,13 @@ class Radio(threading.Thread):
             self.tx_event.clear()
             self.tx_lock.acquire()
             for packet in self.tx_buffer:
-                self.device.write(packet)
+                self._write_sync(packet)
             self.tx_buffer = []
             self.tx_lock.release()
+
+    def _write_sync(self, packet):
+        self.log.debug('>> %s', base64.b64encode(packet))
+        self.device.write(packet)
 
     def recv(self, timeout=None):
         if not self.rx_event.wait(timeout):

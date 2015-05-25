@@ -173,9 +173,7 @@ class Xtend900(looper.Looper):
         self.write(str + '\r\n')
 
     def write(self, data):
-        s = str(data)
-        self.log.debug('>> %s', s)
-        self.serial.write(s)
+        self.serial.write(str(data))
         self.serial.flush()
 
     def read(self, n):

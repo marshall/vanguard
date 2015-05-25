@@ -98,8 +98,7 @@ class Beacon(Looper):
 
     def on_started(self):
         for radio in self.radios.values():
-            if radio.protocol == 'vanguard':
-                radio.start()
+            radio.start()
 
     def on_iteration(self):
         self.send_location()

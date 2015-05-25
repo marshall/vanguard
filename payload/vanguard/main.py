@@ -12,10 +12,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', default=None)
     parser.add_argument('-l', '--logfile', default=log.DEFAULT_FILENAME)
+    parser.add_argument('-v', '--verbose', action='store_true', default=False)
     parser.add_argument('command')
 
     args = parser.parse_args()
-    log.setup(filename=args.logfile)
+    log.setup(filename=args.logfile, debug_stdout=args.verbose)
     logger = logging.getLogger('main')
 
     try:
