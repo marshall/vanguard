@@ -28,16 +28,31 @@ A detailed list of pin usage is maintained in [PINS.md](PINS.md)
 
 ##### BeagleBone Black setup
 
-- [Debian 7 with recent gnueabihf kernel](http://www.armhf.com/download/)
-- APT packages:
+We use the Ubuntu 14.04.2 LTS builds from RobertCNelson, instructions and more
+info can be pulled from the [eLinux Wiki](http://elinux.org/BeagleBoardUbuntu#BeagleBone.2FBeagleBone_Black)
 
-        $ sudo apt-get install gpsd streamer build-essential python python-dev python-setuptools python-pip python-smbus
-- Python packages:
+- Flash a 2GB or higher microSD card w/ Ubuntu 14.04.2 LTS from RobertCNelson's
+  builds, where **/dev/sdX** is your SD card device name:
 
-        $ sudo pip install -r payload/requirements.txt
-- [Adafruit BBIO Python Library](https://learn.adafruit.com/setting-up-io-python-library-on-beaglebone-black/installation-on-ubuntu)
-- [NodeJS v0.10.16](http://www.armhf.com/node-js-for-the-beaglebone-black/)
+        $ wget https://rcn-ee.com/rootfs/2015-05-08/microsd/bone-ubuntu-14.04.2-console-armhf-2015-05-08-2gb.img.xz
+        $ unxz bone-ubuntu-14.04.2-console-armhf-2015-05-08-2gb.img.xz
+        $ sudo dd if=./bone-ubuntu-14.04.2-console-armhf-2015-05-08-2gb.img of=/dev/sdX
 
+- Insert the microSD into your BeagleBone black with the mini-USB connector
+  attached to your laptop, and ssh in with user **ubuntu** password **temppwd**
+
+        $ ssh ubuntu@arm.local
+
+- If the microSD is over 2GB, grow the partition so it allows over 2GB:
+
+        $ cd /opt/scripts/tools
+        $ git pull
+        $ ./grow_partition.sh
+        $ sudo reboot
+
+- Now run the vanguard bootstrap script:
+
+        $ sudo ./payload/bootstrap.sh
 
 ##### Dev environment setup
 
