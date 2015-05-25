@@ -4,8 +4,8 @@ var gulp = require('gulp'),
     sourcemaps = require('gulp-sourcemaps'),
     watch = require('gulp-watch');
 
-const SRC_FILES = ['index.js', '{lib,mock,test}/**/*.js'];
-const ASSET_FILES = ['**/*.jpg'];
+const SRC_FILES = ['vg-*.js', '{lib,mock,test}/**/*.js'];
+const ASSET_FILES = ['vg-console.sh', 'mock/*.jpg'];
 
 gulp.task('babel', function() {
   return gulp.src(SRC_FILES, { base: '.' })

@@ -171,15 +171,6 @@ export class Station extends EventEmitter {
           log.error(err);
           process.exit(1);
         });
-
-    /*this.openGPS()
-        .then(() => {
-          this.startParser(this.gpsStream, 'gps', NmeaParser);
-        })
-        .catch(err => {
-          // GPS isn't required for ground station operations
-          log.warn(err);
-        });*/
   }
 
   startParser(stream, source, Parser) {

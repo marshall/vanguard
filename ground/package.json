@@ -2,7 +2,7 @@
   "name": "vanguard-station",
   "version": "0.0.1",
   "description": "Vanguard ground station software",
-  "main": "index.js",
+  "main": "dist/vg-station.js",
   "scripts": {
     "gulp": "gulp",
     "test": "gulp test"
@@ -28,6 +28,7 @@
     "promise": "^7.0.0",
     "ref-struct": "^1.0.1",
     "serialport": "^1.6.3",
+    "shelljs": "^0.5.0",
     "struct": "0.0.8",
     "uuid": "^2.0.1",
     "winston": "^1.0.0"
@@ -47,5 +48,9 @@
     "sinon": "^1.14.1",
     "source-map-support": "^0.2.10",
     "unit.js": "^2.0.0"
+  },
+  "bin": {
+    "vg-console": "dist/vg-console.sh",
+    "vg-station": "dist/vg-station.js"
   }
 }

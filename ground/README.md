@@ -12,6 +12,7 @@ for new messages from a Vanguard mission.
 ### Environment setup w/ nodejs v0.10.x+
 
         $ npm install
+        $ [sudo] npm link
 
 ### Build system
 
@@ -23,6 +24,6 @@ for new messages from a Vanguard mission.
 
         $ gulp test
 
-* Run the ground station
+* Run the ground station console (with mock balloon)
 
-        $ node dist/index.js [args]
+        $ vg-console --mock --verbose
