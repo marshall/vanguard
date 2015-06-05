@@ -1,10 +1,12 @@
-import unittest
-import os
-import logging
+from StringIO import StringIO
 
+import logging
 import mock
 import mockredis
-from StringIO import StringIO
+import os
+import unittest
+
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('upload-test')
@@ -68,7 +70,7 @@ class UploadTestCase(unittest.TestCase):
         self.beacon.send_location = mock.MagicMock()
         self.beacon.on_iteration()
 
-        referenceMsg = self.vanguard_proto.ProgramResultMsg.from_data(index=0,
+        reference_msg = self.vanguard_proto.ProgramResultMsg.from_data(index=0,
                                                                       chunk=0,
                                                                       chunk_count=1,
                                                                       program_name_length=10,
@@ -78,7 +80,7 @@ class UploadTestCase(unittest.TestCase):
                                                                       program_output_data='helloworld').as_buffer()
 
         name, args, kwargs = primary_radio.send.mock_calls[0]
-        sentMsg = self.vanguard_proto.ProgramResultMsg.from_data(index=kwargs.get('index'),
+        sent_msg = self.vanguard_proto.ProgramResultMsg.from_data(index=kwargs.get('index'),
                                                                  chunk=kwargs.get('chunk'),
                                                                  chunk_count=kwargs.get('chunk_count'),
                                                                  program_name_length=kwargs.get('program_name_length'),
@@ -87,7 +89,7 @@ class UploadTestCase(unittest.TestCase):
                                                                  program_name=kwargs.get('program_name'),
                                                                  program_output_data=kwargs.get('program_output_data')).as_buffer()
 
-        self.assertEqual(sentMsg, referenceMsg) 
+        self.assertEqual(reference_msg, sent_msg) 
 
     def tearDown(self):
         try:
@@ -95,4 +97,3 @@ class UploadTestCase(unittest.TestCase):
             os.remove('helloworld.log')        
         except OSError:
             pass
-        

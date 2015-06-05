@@ -261,6 +261,31 @@ class PhotoDataMsg(Msg):
         return buffer(self.msg_data, self.data_struct.size,
                       self.msg_len - self.data_struct.size)
 
+@msg_type(4)
+class ProgramUploadMsg(Msg):
+    data_struct = struct.Struct('!HHHHH')
+    data_attrs = (('index', 0), ('chunk', 0), ('chunk_count', 0), ('program_name_len', 0), ('program_data_len', 0))
+
+    @classmethod
+    def from_data(cls, index=0, chunk=0, chunk_count=0, program_name_len=0, program_data_len=0, program_name='', program_upload_data=''):
+        header = cls.data_struct.pack(index, chunk, chunk_count, program_name_len, program_data_len)
+        return cls(msg_data=header+program_name+program_upload_data)
+
+    @property
+    def message_data(self):
+        return buffer(self.msg_data)
+
+@msg_type(5)
+class ProgramResultMsg(Msg):
+    data_struct = struct.Struct('!HHHHHb') 
+    data_attrs = (('index', 0), ('chunk', 0), ('chunk_count', 0), ('program_name_len', 0),
+                  ('program_data_len', 0), ('exit_code',0))
+
+    @classmethod
+    def from_data(cls, index=0, chunk=0, chunk_count=0, program_name_length=0, program_data_length=0, exit_code=0, program_name='', program_output_data=''):
+        header = cls.data_struct.pack(index, chunk, chunk_count, program_name_length, program_data_length, exit_code)
+        return cls(msg_data=header+program_name+program_output_data)
+
 @msg_type(10)
 class StartPhotoDataMsg(Msg):
     data_struct = struct.Struct('!H')
@@ -376,6 +401,17 @@ class VanguardFormatter(object):
 
     def format_pong(self, magic, **kwargs):
         msg = PongMsg.from_data(magic=magic)
+        return msg.as_buffer()
+
+    def format_ProgramResultMsg(self, **kwargs):
+        msg = ProgramResultMsg.from_data(index=kwargs.get('index'),
+                                         chunk=kwargs.get('chunk'),
+                                         chunk_count=kwargs.get('chunk_count'),
+                                         exit_code=kwargs.get('exit_code'),
+                                         program_name_length=(kwargs.get('program_name_length')),
+                                         program_data_length=(kwargs.get('program_data_length')),
+                                         program_name=(kwargs.get('program_name')),
+                                         program_output_data=(kwargs.get('program_output_data')))
         return msg.as_buffer()
 
     def format_packet(self, data):

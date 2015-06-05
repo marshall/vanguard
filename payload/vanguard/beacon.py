@@ -19,7 +19,7 @@ from handler import *
 
 @command('beacon')
 class Beacon(Looper):
-    handler_types = [PingHandler]
+    handler_types = [PingHandler, UploadHandler]
 
     def __init__(self, config):
         super(Beacon, self).__init__()
@@ -105,7 +105,7 @@ class Beacon(Looper):
         if self.telemetry_count % self.telemetry_multiple == 0:
             self.send_telemetry()
         self.telemetry_count += 1
-
+            
         for radio in self.radios.values():
             if radio.protocol == 'vanguard':
                 packet = radio.recv(self.interval)
