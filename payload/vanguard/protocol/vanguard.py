@@ -119,9 +119,14 @@ class Msg(object):
             self.pack_data(msg_data)
 
     def __str__(self):
-        return '%s[%d](%s)' % (self.__class__.__name__,
-                               self._buffer_len,
-                               self.data_attr_str())
+        header = self._get_header()
+        return '%s[%d](type=%s, timestamp=%s, crc32=%x, %s)' % \
+            (self.__class__.__name__,
+             self._buffer_len,
+             header.msg_type,
+             header.msg_timestamp,
+             header.msg_crc32,
+             self.data_attr_str())
 
     def data_attr_str(self):
         if not self.data_attrs:
@@ -352,7 +357,7 @@ class MsgReader(object):
             self.state = self.state_header
             raise
 
-class VanguardFormatter(object):
+class VanguardProtocol(object):
     def __init__(self, **kwargs):
         pass
 
@@ -363,7 +368,7 @@ class VanguardFormatter(object):
                                     speed=speed)
         return msg.as_buffer()
 
-    def format_telemetry(self, packet_id, **kwargs):
+    def format_telemetry(self, **kwargs):
         msg = TelemetryMsg.from_data(
             uptime=int(kwargs.get('uptime', 0)),
             mode=0,
@@ -380,3 +385,6 @@ class VanguardFormatter(object):
 
     def format_packet(self, data):
         return data
+
+    def read_message(self, f):
+        return MsgReader().read(f)

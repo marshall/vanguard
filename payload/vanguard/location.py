@@ -40,10 +40,11 @@ class Location(Looper):
                         alt=report.get('alt', 0),
                         speed=report.get('speed', 0),
                         climb=report.get('climb', 0),
-                        time=report.get('time', time.time()))
+                        time=report.get('time', time.time()),
+                        localtime=time.time())
 
         location_str = json.dumps(location)
-        self.redis.rpush('locations', location_str)
+        self.redis.rpush('location', location_str)
         self.redis.incr('location_session_count')
 
     def on_stopped(self):

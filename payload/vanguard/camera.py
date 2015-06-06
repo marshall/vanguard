@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 import json
 import os
+import struct
 import subprocess
 import sys
 import time
 
 import redis
-from pexif import JpegFile
+from pexif import JpegFile, Rational
 
 from command import command
 from looper import Interval
@@ -24,22 +25,40 @@ class Camera(Interval):
         self.redis = redis.StrictRedis()
         self.proc = None
 
-    def geotag_photo(self, filename):
-        if not self.redis.exists('locations'):
+        if not os.path.exists(config.camera.device):
+            self.log.warn('Camera @ %s does not exist, waiting.', config.camera.device)
+
+    def tag_photo(self, filename):
+        location_str = self.redis.lindex('location', -1)
+        telemetry_str = self.redis.lindex('telemetry', -1)
+        location = json.loads(location_str) if location_str else None
+        telemetry = json.loads(telemetry_str) if telemetry_str else None
+
+        if not (location or telemetry):
             return
 
-        location = json.loads(self.redis.lindex('locations', -1))
-
         try:
-            self.log.info('geotag %s (%f, %f)', filename,
-                          location['lat'], location['lon'])
             jpeg = JpegFile.fromFile(filename)
-            jpeg.set_geo(location['lat'], location['lon'])
+            attr = jpeg.get_exif(create=True).get_primary(create=True)
+            if location:
+                self.log.info('tag %s (lat=%f, lon=%f, alt=%f)', filename,
+                              location['lat'], location['lon'], location['alt'])
+                jpeg.set_geo(location['lat'], location['lon'])
+
+                attr.GPS.GPSAltitudeRef = '\x00' # Above sea level
+                attr.GPS.GPSAltitude = [Rational(int(location['alt']), 1)]
+
+            if telemetry:
+                attr.ExtendedEXIF.UserComment = telemetry_str
+
             jpeg.writeFile(filename)
         except (IOError, JpegFile.InvalidFile):
-            self.log.exception('Error geotagging photo: %s', filename)
+            self.log.exception('Error tagging photo: %s', filename)
 
     def on_interval(self):
+        if not os.path.exists(self.camera.device):
+            return
+
         filename = os.path.join(self.photo_dir,
                                 '%05d.jpeg' % self.redis.llen('photos'))
 
@@ -49,15 +68,17 @@ class Camera(Interval):
                '-j', str(self.camera.quality),
                '-b', str(self.camera.depth),
                '-o', filename]
-        try:
-            self.log.info(" ".join(cmd))
-            self.proc = subprocess.Popen(cmd)
-            self.proc.wait()
 
-            self.redis.rpush('photos', filename)
-            self.geotag_photo(filename)
-        except subprocess.CalledProcessError, e:
-            self.log.error('Failed to call streamer: %s', str(e))
+        self.log.info(" ".join(cmd))
+        self.proc = subprocess.Popen(cmd)
+        result = self.proc.wait()
+
+        if result != 0:
+            self.log.error('streamer call failed: %d', result)
+            return
+
+        self.redis.rpush('photos', filename)
+        self.tag_photo(filename)
 
     def on_cleanup(self):
         if self.proc:

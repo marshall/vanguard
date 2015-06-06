@@ -32,24 +32,24 @@
     },
 
     "secondary": {
-      "type": "kisstnc",
+      "type": "tx2h",
       "protocol": "aprs",
       "device": "/tmp/kisstnc",
       "baudrate": 1200,
       "callsign": "N5JHH-2",
-      "path": "WIDE2-1"
+      "ptt_pin_num": 61,
+      "ptt_pin": "P8_26",
+      "ptt_high": 3.0
     }
   },
 
   "beacon": {
-    "position_interval": 15,
-    "telemetry_interval": 60,
-    "beacon_interval": 300
+    "interval": 15
   },
 
-  "temp": {
+  "telemetry": {
     "int_temp_pin": "P9_37",
     "ext_temp_pin": "P9_39",
-    "interval": 5
+    "interval": 15
   }
 }
