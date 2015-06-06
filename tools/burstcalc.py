@@ -130,6 +130,9 @@ def calc_burst(payload_mass=1000, # grams
     neck_lift = (gross_lift - balloon_mass) * 1000
     total_mass = payload_mass + balloon_mass
     free_lift = (gross_lift - total_mass) * grav_accel
+    if gross_lift <= total_mass:
+        raise Exception('Altitude unreachable for this configuration')
+
     ascent_rate = math.sqrt(free_lift / (0.5 * balloon_cd * launch_area * air_density))
     volume_ratio = launch_volume / burst_volume
     burst_altitude = -(air_density_model) * math.log(volume_ratio)
@@ -145,7 +148,8 @@ def calc_burst(payload_mass=1000, # grams
                 burst_altitude=burst_altitude,
                 time_to_burst=time_to_burst,
                 neck_lift=neck_lift,
-                launch_volume=launch_volume)
+                launch_volume=launch_volume,
+                burst_diameter=burst_diameter)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -214,16 +218,22 @@ def main():
     if args.payload_mass == 0 or args.balloon_mass == 0:
         parser.error('Payload mass and balloon mass are required')
 
-    burst = calc_burst(target_burst_alt=args.target_burst_alt,
-                       target_ascent_rate=args.target_ascent_rate,
-                       payload_mass=args.payload_mass,
-                       balloon_mass=args.balloon_mass,
-                       burst_diameter=args.burst_diameter,
-                       balloon_cd=args.balloon_cd,
-                       gas_density=args.gas_density,
-                       air_density=args.air_density,
-                       air_density_model=args.air_density_model,
-                       grav_accel=args.grav_accel)
+    try:
+        burst = calc_burst(target_burst_alt=args.target_burst_alt,
+                           target_ascent_rate=args.target_ascent_rate,
+                           payload_mass=args.payload_mass,
+                           balloon_mass=args.balloon_mass,
+                           burst_diameter=args.burst_diameter,
+                           balloon_cd=args.balloon_cd,
+                           gas_density=args.gas_density,
+                           air_density=args.air_density,
+                           air_density_model=args.air_density_model,
+                           grav_accel=args.grav_accel)
+    except Exception, e:
+        if args.json:
+            print json.dumps(dict(error=str(e)))
+            return
+        parser.error(e)
 
     if args.json:
         print json.dumps(burst, sort_keys=True, indent=4, separators=(',', ': '))
@@ -231,15 +241,23 @@ def main():
 
     alt = burst['burst_altitude'] / 1000.0
     lv = burst['launch_volume']
+    neck_lift = burst['neck_lift']
+    burst_h = int(burst['time_to_burst'] / 60.0)
+    burst_m = burst['time_to_burst'] % 60
 
     data = '''
-Ascent Rate: {ascent_rate:.2f} m/s
-Burst Altitude: {alt:.1f} km
-Time to Burst: {time_to_burst:.0f} min
-Neck Lift: {neck_lift:.0f} g
-Launch Volume: {launch_volume:.2f} m^3 / {lv_L:.2f} L / {lv_ft3:.2f} ft^3'''
+* Payload mass: {mass:.0f} g
+* Target Burst Altitude: {alt:.1f} km
+* Balloon burst diameter: {burst_diameter:.1f} m
+* Ascent Rate: {ascent_rate:.2f} m/s
+* Time to Burst: {burst_h:.0f}h {burst_m:.0f}m
+* Neck Lift: {neck_lift:.0f} g / {neck_lift_lb:.1f} lbs
+* Launch Volume: {launch_volume:.2f} m^3 / {lv_L:.2f} L / {lv_ft3:.2f} ft^3'''
 
-    print data.format(alt=alt, lv_L=lv * 1000, lv_ft3=lv * 35.31, **burst)
+    print data.format(mass=args.payload_mass, alt=alt,
+                      lv_L=lv * 1000, lv_ft3=lv * 35.31,
+                      neck_lift_lb=neck_lift * 0.00220462,
+                      burst_h=burst_h, burst_m=burst_m, **burst)
 
 if __name__ == '__main__':
     main()
