@@ -25,7 +25,7 @@ this_dir=$(cd "`dirname "$0"`"; pwd)
 cd "$this_dir"
 
 python burstcalc.py \
-    --target-burst-alt 25000 \
+    --target-burst-alt 26000 \
     --payload-mass     2200 \
     --balloon          p600 \
     --burst-diameter   6.1 \
