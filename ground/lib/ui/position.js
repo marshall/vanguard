@@ -34,7 +34,7 @@ class Position extends Pane {
 
       let lat = sprintf(LAT_FORMAT, this.position.lat);
       let lon = sprintf(LON_FORMAT, this.position.lon);
-      let alt = sprintf(ALT_FORMAT, this.position.alt);
+      let alt = sprintf(ALT_FORMAT, this.position.alt / 1000.0);
       let speed = sprintf(SPEED_FORMAT, this.position.speed);
 
       this.table.setColumn(1, [lat, lon, alt, speed]);
