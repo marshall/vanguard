@@ -19,7 +19,7 @@ from handler import *
 
 @command('beacon')
 class Beacon(Looper):
-    handler_types = [PingHandler]
+    handler_types = [PingHandler, UploadHandler]
 
     def __init__(self, config):
         super(Beacon, self).__init__()
@@ -67,6 +67,7 @@ class Beacon(Looper):
     def on_started(self):
         for radio in self.radios.values():
             radio.start()
+
 
     def recv_data(self):
         for radio in self.radios.values():
