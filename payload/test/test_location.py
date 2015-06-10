@@ -46,10 +46,10 @@ class LocationTest(unittest.TestCase):
         while not l.ensure_connected():
             pass
 
-        while l.redis.llen('locations') == 0:
+        while l.redis.llen('location') == 0:
             l.on_iteration()
 
-        loc = l.redis.lindex('locations', -1)
+        loc = l.redis.lindex('location', -1)
         self.assertTrue(loc is not None)
         self.assertEqual(l.redis.get('location_session_count'), '1')
 

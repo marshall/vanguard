@@ -15,9 +15,9 @@ class MainTest(unittest.TestCase):
     @mock.patch.dict('sys.modules', Adafruit_BBIO=mock.MagicMock())
     @mock.patch.dict('sys.modules', {'Adafruit_BBIO.ADC': mock.MagicMock()})
     def test_main(self):
-        from vanguard import main, temp
-        temp.Temp.main = mock.MagicMock()
-        sys.argv[1:] = ['--logfile', '/tmp/test_main.log', 'temp']
+        from vanguard import main, telemetry
+        telemetry.Telemetry.main = mock.MagicMock()
+        sys.argv[1:] = ['--logfile', '/tmp/test_main.log', 'telemetry']
         main.main()
 
-        self.assertTrue(temp.Temp.main.called)
+        self.assertTrue(telemetry.Telemetry.main.called)

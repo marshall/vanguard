@@ -17,6 +17,9 @@ import { Parser as VgParser, Message } from './parsers/vanguard';
 import { Parser as NmeaParser } from './parsers/nmea';
 import * as repl from './repl';
 import TrackDB from './trackdb';
+import * as aprs from './aprs';
+
+const APRS_INTERVAL = 30000; // Every 30 seconds
 
 export class Station extends EventEmitter {
   constructor(options) {
@@ -44,8 +47,15 @@ export class Station extends EventEmitter {
     this.replPort = parseInt(options.replPort);
 
     this.trackDB = new TrackDB(this, {
-      remoteURL: options.remoteUrl
+      remoteURL: options.remoteUrl,
     });
+
+    this.aprsClient = new aprs.Client({
+      // TODO: make these configurable
+      user: 'N5JHH-2',
+      pass: '16287'
+    });
+    this.aprsLast = null;
 
     this.startServers();
     log.info('Ground station listening');
@@ -191,6 +201,29 @@ export class Station extends EventEmitter {
 
     this.emit('message', msg);
     this._broadcast(msg);
+
+    if (msg.type === 'location') {
+      this.aprsPublish(msg);
+    }
+  }
+
+  aprsPublish(location) {
+    if (this.aprsClient.state !== 'ready') {
+      return;
+    }
+
+    let now = new Date();
+    if (this.aprsLast === null ||
+        now - this.aprsLast >= APRS_INTERVAL) {
+
+      this.aprsClient.sendPacket(new aprs.Position({
+        latitude: location.lat,
+        longitude: location.lon,
+        altitude: (location.alt / 1000.0) * 3.28084
+      }));
+
+      this.aprsLast = new Date();
+    }
   }
 
   _broadcast(msg) {

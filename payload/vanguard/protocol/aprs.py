@@ -3,7 +3,7 @@ import datetime
 import afsk, afsk.ax25
 import dateutil.parser
 
-class APRSFormatter(object):
+class APRSProtocol(object):
     POSITION  = '/{time}h{location}O{course:03.0f}/{speed:03.0f}/A={alt:06.0f}'
     TELEMETRY = 'T#{packet_id:03d},{r1:03d},{r2:03d},{r3:03d},{r4:03d},{r5:03d},{d:08b}'
 
@@ -44,9 +44,9 @@ class APRSFormatter(object):
                                     speed=speed_kmh,
                                     alt=alt_feet)
 
-    def format_telemetry(self, packet_id, int_temp=0, ext_temp=0, cpu_usage=0,
+    def format_telemetry(self, _index=0, int_temp=0, ext_temp=0, cpu_usage=0,
                          free_mem=0, uptime=0, **kwargs):
-        return self.TELEMETRY.format(packet_id=int(packet_id),
+        return self.TELEMETRY.format(packet_id=int(_index) % 1000,
                                      r1=int(int_temp),
                                      r2=int(ext_temp),
                                      r3=int(cpu_usage),
