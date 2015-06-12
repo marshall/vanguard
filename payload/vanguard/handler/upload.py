@@ -38,16 +38,16 @@ class UploadHandler(object):
         if not os.path.exists(self.directory): # received first chunk of a new program 
             os.makedirs(self.directory)
             bool_arr = [False] * self.chunk_count
-            bool_arr[self.chunk-1] = True
+            bool_arr[self.chunk - 1] = True
             with open(self.directory + self.program_name + '.kbf', 'w+') as indexFile: #.kbf-Kubos Binary Format
                 indexFile.write(struct.pack(fmt_str, *bool_arr))
             if self.chunk_count == 1:
                 self.store_chunk()
                 self.assemble_file()
-        else:                         #This chunk is from a partially received program
+        else:  #This chunk is from a partially received program
             index_struct = struct.Struct(fmt_str)
             contents = []
-            with open(self.directory+self.program_name+'.kbf', 'rb') as indexfile:
+            with open(self.directory + self.program_name + '.kbf', 'rb') as indexfile:
                 while True:
                     buf = indexfile.read(index_struct.size)
                     if len(buf) != index_struct.size:
@@ -55,9 +55,9 @@ class UploadHandler(object):
                     contents.append(index_struct.unpack_from(buf))
             contents = list(contents[0])
 
-            contents[self.chunk-1] = True
+            contents[self.chunk - 1] = True
 
-            with open(self.directory+self.program_name+'.kbf', 'w') as indexFile:
+            with open(self.directory + self.program_name + '.kbf', 'w') as indexFile:
                 indexFile.write(struct.pack(fmt_str, *contents))
 
             if all([val == True for val in contents]):
@@ -67,13 +67,13 @@ class UploadHandler(object):
         self.store_chunk()
 
     def store_chunk(self): 
-        with open(self.directory+'/'+str(self.chunk)+'.dat', 'w+') as chunkFile:
+        with open(self.directory  + '/' + str(self.chunk) + '.dat', 'w+') as chunkFile:
             chunkFile.write(self.program_data)
 
     def assemble_file(self):
-        with open(self.directory+'/'+self.filename, 'w') as program_file:
+        with open(self.directory + '/' + self.filename, 'w') as program_file:
             for nums in range(self.chunk_count):
-                with open(self.directory+str(nums+1)+'.dat','r') as chunk_file:
+                with open(self.directory + str(nums + 1) + '.dat','r') as chunk_file:
                     chunk_data = chunk_file.read()
                     program_file.write(chunk_data)
         self.run_program()

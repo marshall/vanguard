@@ -111,8 +111,6 @@ class UploadTestCase(unittest.TestCase):
                                                    program_name='helloworld',
                                                    program_output_data='helloworld\n')
 
-
-
     def test_partially_received(self):
         #Set up partially received program where message1 has already been received
         shutil.copytree('uploads/testCase','uploads/programs/helloworld') 
@@ -159,21 +157,42 @@ class UploadTestCase(unittest.TestCase):
         result_string3 = test_data[470:] + '\n'
 
         message = self.vanguard_proto.ProgramUploadMsg.from_data(index=0, 
-                                                                  chunk=1,
-                                                                  chunk_count=1,
-                                                                  program_name_len=len(program_name),
-                                                                  program_data_len=len(js_data),
-                                                                  program_name=program_name,
-                                                                  program_upload_data=js_data)
+                                                                 chunk=1,
+                                                                 chunk_count=1,
+                                                                 program_name_len=len(program_name),
+                                                                 program_data_len=len(js_data),
+                                                                 program_name=program_name,
+                                                                 program_upload_data=js_data)
 
         self.beacon.handle_packet(self.primary_radio,message)
 
-        calls = [mock.call(index=0, type='ProgramResultMsg', chunk=1, exit_code=0, program_name_length=len(program_name), 
-                      program_data_length=len(result_string1), program_name=program_name, chunk_count=3, program_output_data=result_string1),
-                 mock.call(index=1, type='ProgramResultMsg', chunk=2, exit_code=0, program_name_length=len(program_name), 
-                      program_data_length=len(result_string2), program_name=program_name, chunk_count=3, program_output_data=result_string2),
-                 mock.call(index=2, type='ProgramResultMsg', chunk=3, exit_code=0, program_name_length=len(program_name),
-                      program_data_length=len(result_string3), program_name=program_name, chunk_count=3, program_output_data=result_string3)]
+        calls = [mock.call(index=0, 
+                           type='ProgramResultMsg', 
+                           chunk=1, 
+                           exit_code=0, 
+                           program_name_length=len(program_name), 
+                           program_data_length=len(result_string1), 
+                           program_name=program_name, 
+                           chunk_count=3, 
+                           program_output_data=result_string1),
+                 mock.call(index=1, 
+                           type='ProgramResultMsg', 
+                           chunk=2, 
+                           exit_code=0, 
+                           program_name_length=len(program_name), 
+                           program_data_length=len(result_string2), 
+                           program_name=program_name, 
+                           chunk_count=3, 
+                           program_output_data=result_string2),
+                 mock.call(index=2, 
+                           type='ProgramResultMsg', 
+                           chunk=3, 
+                           exit_code=0, 
+                           program_name_length=len(program_name),
+                           program_data_length=len(result_string3), 
+                           program_name=program_name, 
+                           chunk_count=3, 
+                           program_output_data=result_string3)]
         
         self.primary_radio.send.assert_has_calls(calls)
 
