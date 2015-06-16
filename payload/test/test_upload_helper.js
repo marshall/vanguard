@@ -1,4 +1,4 @@
-var child_process = require('child_process');
-child_process.exec('cat ./__init__.py', function (err, stdout, stderr){
-    console.log(stdout);
-});
+// (11 + 1) * 50 = 600 bytes
+for (var i = 0; i < 50; i++) {
+  console.log('Lorem ipsum');
+}

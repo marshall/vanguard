@@ -1,10 +1,12 @@
 from StringIO import StringIO
 
 import logging
+import math
 import mock
 import mockredis
 import os
 import shutil
+import tempfile
 import unittest
 
 logging.basicConfig(level=logging.INFO)
@@ -27,6 +29,7 @@ class UploadTestCase(unittest.TestCase):
                beacon=dict(interval=5))
 
     def setUp(self):
+        self.cfg['work_dir'] = tempfile.mkdtemp()
         self.KISS = mock.MagicMock()
         self.module_patcher = mock.patch.dict('sys.modules', {
             'Adafruit_BBIO': mock.MagicMock(),
@@ -55,7 +58,7 @@ class UploadTestCase(unittest.TestCase):
     def test_single_chunk(self):
         program_name = 'helloworld'
         program_data = 'console.log("helloworld")'
-        message = self.vanguard_proto.ProgramUploadMsg.from_data(index=0, 
+        message = self.vanguard_proto.ProgramUploadMsg.from_data(index=0,
                                                                  chunk=1,
                                                                  chunk_count=1,
                                                                  program_name_len=len(program_name),
@@ -89,7 +92,7 @@ class UploadTestCase(unittest.TestCase):
                                                                   program_data_len=5,
                                                                   program_name='helloworld',
                                                                   program_upload_data='.log(')
-        message3 = self.vanguard_proto.ProgramUploadMsg.from_data(index=2, 
+        message3 = self.vanguard_proto.ProgramUploadMsg.from_data(index=2,
                                                                   chunk=3,
                                                                   chunk_count=3,
                                                                   program_name_len=10,
@@ -112,10 +115,11 @@ class UploadTestCase(unittest.TestCase):
                                                    program_output_data='helloworld\n')
 
     def test_partially_received(self):
-        #Set up partially received program where message1 has already been received
-        base_directory = os.path.dirname(os.path.abspath(__file__)) + '/uploads/'
-        shutil.copytree(base_directory + 'testCase', base_directory + 'programs/helloworld') 
-        message2 = self.vanguard_proto.ProgramUploadMsg.from_data(index=1, 
+        # Set up partially received program where message1 has already been received
+        program_dir = self.cfg['work_dir'] + '/uploads/programs/helloworld'
+        testcase_dir = os.path.dirname(os.path.abspath(__file__)) + '/uploads/testCase'
+        shutil.copytree(testcase_dir, program_dir)
+        message2 = self.vanguard_proto.ProgramUploadMsg.from_data(index=1,
                                                                   chunk=2,
                                                                   chunk_count=3,
                                                                   program_name_len=10,
@@ -123,7 +127,7 @@ class UploadTestCase(unittest.TestCase):
                                                                   program_name='helloworld',
                                                                   program_upload_data='.log(')
 
-        message3 = self.vanguard_proto.ProgramUploadMsg.from_data(index=2, 
+        message3 = self.vanguard_proto.ProgramUploadMsg.from_data(index=2,
                                                                   chunk=3,
                                                                   chunk_count=3,
                                                                   program_name_len=10,
@@ -131,8 +135,8 @@ class UploadTestCase(unittest.TestCase):
                                                                   program_name='helloworld',
                                                                   program_upload_data='"helloworld")')
 
-        self.beacon.handle_packet(self.primary_radio,message3)
-        self.beacon.handle_packet(self.primary_radio,message2)
+        self.beacon.handle_packet(self.primary_radio, message3)
+        self.beacon.handle_packet(self.primary_radio, message2)
 
         self.primary_radio.send.assert_called_with(type='ProgramResultMsg',
                                                    index=0,
@@ -145,22 +149,36 @@ class UploadTestCase(unittest.TestCase):
                                                    program_output_data='helloworld\n')
 
     def test_multi_chunk_result(self): 
-        #send a js file that sends back the contents of ./__init__.py in multiple result messages
-        init_file = os.path.dirname(os.path.abspath(__file__)) + '/__init__.py'
-        js_file = os.path.dirname(os.path.abspath(__file__)) + '/test_upload_helper.js'
+        # send a js file that sends back the contents of ./__init__.py in
+        # multiple result messages
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        js_file = this_dir + '/test_upload_helper.js'
+        program_name = 'multi_chunk_result'
 
-        with open(init_file, 'r') as input_file:
-            test_data = input_file.read()
-        with open(js_file,'r') as js_file:
-            js_data = js_file.read()
-        prog_data = 'console.log("' + test_data + '")'
-        program_name = 'helloworld'
+        with open(js_file,'r') as f:
+            js_data = f.read()
 
-        result_string1 = test_data[0:235]
-        result_string2 = test_data[235:470]
-        result_string3 = test_data[470:] + '\n'
+        # This matches the output of test_uploader_helper.js exactly!
+        lorem_ipsum = 'Lorem ipsum\n' * 50
+        chunk_len = self.vanguard_proto.ProgramResultMsg.max_data_len(program_name)
+        chunk_count = int(math.ceil(len(lorem_ipsum) / float(chunk_len)))
+        calls = []
+        i = 0
+        for index in range(0, chunk_count):
+            start = index * chunk_len
+            chunk = lorem_ipsum[start:start+chunk_len]
+            calls.append(mock.call(index=i,
+                                   type='ProgramResultMsg',
+                                   chunk=i + 1,
+                                   exit_code=0,
+                                   program_name_length=len(program_name),
+                                   program_data_length=len(chunk),
+                                   program_name=program_name,
+                                   chunk_count=chunk_count,
+                                   program_output_data=chunk))
+            i += 1
 
-        message = self.vanguard_proto.ProgramUploadMsg.from_data(index=0, 
+        message = self.vanguard_proto.ProgramUploadMsg.from_data(index=0,
                                                                  chunk=1,
                                                                  chunk_count=1,
                                                                  program_name_len=len(program_name),
@@ -169,39 +187,10 @@ class UploadTestCase(unittest.TestCase):
                                                                  program_upload_data=js_data)
 
         self.beacon.handle_packet(self.primary_radio,message)
-
-        calls = [mock.call(index=0, 
-                           type='ProgramResultMsg', 
-                           chunk=1, 
-                           exit_code=0, 
-                           program_name_length=len(program_name), 
-                           program_data_length=len(result_string1), 
-                           program_name=program_name, 
-                           chunk_count=3, 
-                           program_output_data=result_string1),
-                 mock.call(index=1, 
-                           type='ProgramResultMsg', 
-                           chunk=2, 
-                           exit_code=0, 
-                           program_name_length=len(program_name), 
-                           program_data_length=len(result_string2), 
-                           program_name=program_name, 
-                           chunk_count=3, 
-                           program_output_data=result_string2),
-                 mock.call(index=2, 
-                           type='ProgramResultMsg', 
-                           chunk=3, 
-                           exit_code=0, 
-                           program_name_length=len(program_name),
-                           program_data_length=len(result_string3), 
-                           program_name=program_name, 
-                           chunk_count=3, 
-                           program_output_data=result_string3)]
-        
         self.primary_radio.send.assert_has_calls(calls)
 
     def tearDown(self):
         try:
-            shutil.rmtree(os.path.dirname(os.path.abspath(__file__)) + '/uploads/programs/helloworld')
+            shutil.rmtree(self.cfg['work_dir'])
         except OSError:
             pass

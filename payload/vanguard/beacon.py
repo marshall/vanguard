@@ -28,7 +28,7 @@ class Beacon(Looper):
         self.redis = redis.StrictRedis()
         self.radios = collections.OrderedDict({})
 
-        self.handlers = [handler() for handler in self.handler_types]
+        self.handlers = [handler(config) for handler in self.handler_types]
         for key, radio_config in config.radios.iteritems():
             self.radios[key] = Radio(**radio_config)
 
