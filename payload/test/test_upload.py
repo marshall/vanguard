@@ -113,7 +113,8 @@ class UploadTestCase(unittest.TestCase):
 
     def test_partially_received(self):
         #Set up partially received program where message1 has already been received
-        shutil.copytree('uploads/testCase','uploads/programs/helloworld') 
+        base_directory = os.path.dirname(os.path.abspath(__file__)) + '/uploads/'
+        shutil.copytree(base_directory + 'testCase', base_directory + 'programs/helloworld') 
         message2 = self.vanguard_proto.ProgramUploadMsg.from_data(index=1, 
                                                                   chunk=2,
                                                                   chunk_count=3,
@@ -147,7 +148,7 @@ class UploadTestCase(unittest.TestCase):
         #send a js file that sends back the contents of ./__init__.py in multiple result messages
         init_file = os.path.dirname(os.path.abspath(__file__)) + '/__init__.py'
         js_file = os.path.dirname(os.path.abspath(__file__)) + '/test_upload_helper.js'
-        
+
         with open(init_file, 'r') as input_file:
             test_data = input_file.read()
         with open(js_file,'r') as js_file:
@@ -201,6 +202,6 @@ class UploadTestCase(unittest.TestCase):
 
     def tearDown(self):
         try:
-            shutil.rmtree('./uploads/programs/helloworld')
+            shutil.rmtree(os.path.dirname(os.path.abspath(__file__)) + '/uploads/programs/helloworld')
         except OSError:
             pass
