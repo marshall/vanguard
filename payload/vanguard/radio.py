@@ -103,7 +103,7 @@ class Radio(threading.Thread):
             return None
 
         with self.rx_lock:
-            result = self.rx_buffer.pop(0)
+            result = self.rx_buffer.popleft()
             if len(self.rx_buffer) == 0:
                 self.rx_event.clear()
 
