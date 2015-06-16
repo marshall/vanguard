@@ -287,6 +287,10 @@ class ProgramResultMsg(Msg):
                   ('program_data_len', 0), ('exit_code',0))
 
     @classmethod
+    def max_data_len(cls, program_name):
+        return 255 - (cls.data_struct.size + len(program_name))
+
+    @classmethod
     def from_data(cls, index=0, chunk=0, chunk_count=0, program_name_length=0, program_data_length=0, exit_code=0, program_name='', program_output_data=''):
         header = cls.data_struct.pack(index, chunk, chunk_count, program_name_length, program_data_length, exit_code)
         return cls(msg_data=header+program_name+program_output_data)
