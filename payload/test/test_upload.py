@@ -145,9 +145,12 @@ class UploadTestCase(unittest.TestCase):
 
     def test_multi_chunk_result(self): 
         #send a js file that sends back the contents of ./__init__.py in multiple result messages
-        with open('__init__.py', 'r') as input_file:
+        init_file = os.path.dirname(os.path.abspath(__file__)) + '/__init__.py'
+        js_file = os.path.dirname(os.path.abspath(__file__)) + '/test_upload_helper.js'
+        
+        with open(init_file, 'r') as input_file:
             test_data = input_file.read()
-        with open('test_upload_helper.js','r') as js_file:
+        with open(js_file,'r') as js_file:
             js_data = js_file.read()
         prog_data = 'console.log("' + test_data + '")'
         program_name = 'helloworld'

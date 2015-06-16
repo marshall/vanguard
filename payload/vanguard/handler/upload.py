@@ -29,7 +29,7 @@ class UploadHandler(object):
         self.program_name = second_unpacked_data[5]
         self.filename = self.program_name + '.js'
         self.program_data = second_unpacked_data[6]
-        self.directory = './uploads/programs/' + self.program_name + '/'
+        self.directory = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + '/test/uploads/programs/' + self.program_name + '/'
         self.handle_chunk()
 
     def handle_chunk(self):
@@ -39,36 +39,35 @@ class UploadHandler(object):
             os.makedirs(self.directory)
             bool_arr = [False] * self.chunk_count
             bool_arr[self.chunk - 1] = True
-            with open(self.directory + self.program_name + '.kbf', 'w+') as indexFile: #.kbf-Kubos Binary Format
-                indexFile.write(struct.pack(fmt_str, *bool_arr))
+            with open(self.directory + self.program_name + '.kbf', 'w+') as index_file: #.kbf-Kubos Binary Format
+                index_file.write(struct.pack(fmt_str, *bool_arr))
             if self.chunk_count == 1:
                 self.store_chunk()
                 self.assemble_file()
         else:  #This chunk is from a partially received program
             index_struct = struct.Struct(fmt_str)
             contents = []
-            with open(self.directory + self.program_name + '.kbf', 'rb') as indexfile:
+            with open(self.directory + self.program_name + '.kbf', 'rb') as index_file:
                 while True:
-                    buf = indexfile.read(index_struct.size)
+                    buf = index_file.read(index_struct.size)
                     if len(buf) != index_struct.size:
                         break
-                    contents.append(index_struct.unpack_from(buf))
-            contents = list(contents[0])
+                    contents.extend(index_struct.unpack_from(buf))     
 
             contents[self.chunk - 1] = True
 
-            with open(self.directory + self.program_name + '.kbf', 'w') as indexFile:
-                indexFile.write(struct.pack(fmt_str, *contents))
+            with open(self.directory + self.program_name + '.kbf', 'w') as index_file:
+                index_file.write(struct.pack(fmt_str, *contents))
 
-            if all([val == True for val in contents]):
+            if all(contents):
                 self.store_chunk()
                 self.assemble_file()
                 return
         self.store_chunk()
 
     def store_chunk(self): 
-        with open(self.directory  + '/' + str(self.chunk) + '.dat', 'w+') as chunkFile:
-            chunkFile.write(self.program_data)
+        with open(self.directory  + '/' + str(self.chunk) + '.dat', 'w+') as chunk_file:
+            chunk_file.write(self.program_data)
 
     def assemble_file(self):
         with open(self.directory + '/' + self.filename, 'w') as program_file:
@@ -80,8 +79,8 @@ class UploadHandler(object):
 
     def run_program(self):
         self.output_file_name = self.directory + self.program_name + '.log'
-        outputFile = open(self.output_file_name,'w')
-        process = subprocess.Popen(['nodejs', self.directory + self.filename], stdout=outputFile)
+        output_file = open(self.output_file_name,'w')
+        process = subprocess.Popen(['nodejs', self.directory + self.filename], stdout=output_file)
         process.wait()
         self.exit_code = process.returncode
         self.send_result()
