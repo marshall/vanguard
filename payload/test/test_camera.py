@@ -22,7 +22,7 @@ class TestCamera(unittest.TestCase):
         self.config = config.Config(data=dict(
             work_dir='/tmp',
             camera=dict(
-                device='DEVICE',
+                device='/tmp',
                 resolution='RESOLUTION',
                 quality=100,
                 depth=24,
