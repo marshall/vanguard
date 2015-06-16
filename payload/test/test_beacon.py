@@ -60,6 +60,8 @@ class BeaconTest(unittest.TestCase):
         self.Xtend900 = vanguard.xtend900.Xtend900
 
         self.beacon = vanguard.beacon.Beacon(self.config)
+        for radio in self.beacon.radios.values():
+            radio.ensure_connected()
         self.redis = self.beacon.redis
 
         self.addCleanup(self.module_patcher.stop)
@@ -77,7 +79,6 @@ class BeaconTest(unittest.TestCase):
 
         s = self.beacon.radios['secondary']
         self.assertTrue(isinstance(s.protocol, self.aprs_proto.APRSProtocol))
-        print s.device
         self.assertTrue(isinstance(s.device, self.TX2H))
         self.assertEqual(s.baudrate, 1200)
         self.assertEqual(s.callsign, 'ABCD-1')
