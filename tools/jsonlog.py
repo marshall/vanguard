@@ -17,17 +17,17 @@ import os
 # }'
 
 bigKeys = ['telemetry', 'location', 'location_session_count']
-singleKeys=['free_mem', 'int_temp', 'uptime', 'cpu_usage', 'ext_temp']
-output="redislog.txt"
-filename = "redis_dump.json"
+singleKeys=['time', 'free_mem', 'int_temp', 'uptime', 'cpu_usage', 'ext_temp']
+file1   = "telemetryoutput.json"
+output  = "telemetry.tab"
 
-f = open(filename)
+f = open(file1)
 
 try:
     fdata = json.load(f)
 except ValueError:
-    print "Value Error occurred: this file may not be properly formatted JSON."
-    raise
+    print "\nValue Error occurred: this file may not be properly formatted JSON.\n"
+    sys.exit()
 
 #print "fdata type: " +  str(type(fdata))
 wholedoc = fdata[0]
