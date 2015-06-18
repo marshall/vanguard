@@ -26,3 +26,7 @@ fi
 
 export vanguard_work_dir=$(get_config '.work_dir')
 export vanguard_config_dir="$config_dir"
+
+if [[ ! -d "$vanguard_work_dir" ]]; then
+  mkdir -p "$vanguard_work_dir"
+fi

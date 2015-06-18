@@ -1,6 +1,6 @@
 {
   "debug": false,
-  "work_dir": "/var/run/vanguard",
+  "work_dir": "/vanguard",
 
   "programs": {
     "direwolf": "/usr/local/bin/direwolf",
