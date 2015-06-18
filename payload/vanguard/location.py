@@ -43,6 +43,7 @@ class Location(Looper):
                         time=report.get('time', time.time()),
                         localtime=time.time())
 
+        self.log.debug(location)
         location_str = json.dumps(location)
         self.redis.rpush('location', location_str)
         self.redis.incr('location_session_count')

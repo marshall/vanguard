@@ -128,6 +128,23 @@ class Msg(object):
              header.msg_crc32,
              self.data_attr_str())
 
+    def as_dict(self):
+        header = self._get_header()
+        d = dict(name=self.__class__.__name__,
+                 len=self._buffer_len,
+                 type=header.msg_type,
+                 timestamp=header.msg_timestamp,
+                 crc32=header.msg_crc32,
+                 data={})
+
+        if not self.data_attrs:
+            return d
+
+        for name, _ in self.data_attrs:
+            d['data'][name] = getattr(self, name)
+
+        return d
+
     def data_attr_str(self):
         if not self.data_attrs:
             return ''

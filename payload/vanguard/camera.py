@@ -40,9 +40,9 @@ class Camera(Interval):
         try:
             jpeg = JpegFile.fromFile(filename)
             attr = jpeg.get_exif(create=True).get_primary(create=True)
+            self.log.info('tag %s' % filename, extra={'location': location,
+                                                      'telemetry': telemetry})
             if location:
-                self.log.info('tag %s (lat=%f, lon=%f, alt=%f)', filename,
-                              location['lat'], location['lon'], location['alt'])
                 jpeg.set_geo(location['lat'], location['lon'])
 
                 attr.GPS.GPSAltitudeRef = '\x00' # Above sea level

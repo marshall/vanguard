@@ -84,6 +84,5 @@ class Telemetry(Interval):
         telemetry['int_temp'] = int_temp
         telemetry['ext_temp'] = ext_temp
 
-        telemetry_str = json.dumps(telemetry)
-        self.log.info(telemetry_str)
-        self.redis.rpush('telemetry', telemetry_str)
+        self.log.debug(telemetry)
+        self.redis.rpush('telemetry', json.dumps(telemetry))

@@ -30,7 +30,7 @@ class UploadHandler(object):
         prog_name_length = unpacked_data[3]
         prog_data_length = unpacked_data[4]
 
-        self.log.info('RCVD chunk %d of %d (%d bytes)', self.chunk,
+        self.log.debug('RCVD chunk %d of %d (%d bytes)', self.chunk,
                       self.chunk_count, prog_data_length)
         fmt = fmt + str(prog_name_length) + 's' + str(prog_data_length) + 's'
         second_unpacked_data  = struct.unpack_from(fmt, msg.message_data)
@@ -108,7 +108,11 @@ class UploadHandler(object):
         with open (self.output_path, 'rb') as output_file:
             for output_chunk in range(num_output_chunks):
                 chunk_str = output_file.read(max_data_length)
-                self.log.info('RESULT chunk %d: %s', output_chunk + 1, chunk_str)
+                self.log.debug({'program_name': self.program_name,
+                                'exit_code': self.exit_code,
+                                'chunk': output_chunk + 1,
+                                'chunk_count': num_output_chunks,
+                                'str': chunk_str})
                 self.radio.send(type='ProgramResultMsg',
                                 index=output_chunk,
                                 chunk=output_chunk + 1,

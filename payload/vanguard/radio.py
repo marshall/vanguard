@@ -52,6 +52,8 @@ class Radio(threading.Thread):
             self.device = None
 
     def handle_msg(self, msg):
+        self.log.debug('RCVD %s', msg.__class__.__name__,
+                       extra=msg.as_dict())
         with self.rx_lock:
             self.rx_buffer.append(msg)
         self.rx_event.set()
@@ -95,7 +97,7 @@ class Radio(threading.Thread):
             self.on_iteration()
 
     def _write_sync(self, packet):
-        self.log.debug('>> %s', base64.b64encode(packet))
+        self.log.debug('SEND', extra={'data': base64.b64encode(packet)})
         self.device.write(packet)
 
     def recv(self, timeout=None):
