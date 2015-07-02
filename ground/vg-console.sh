@@ -17,10 +17,9 @@ if [[ -f /tmp/.vg-console ]]; then
     rm /tmp/.vg-console
 fi
 
-tmux start-server
-BASE=$(tmux showw -gv pane-base-index)
+BASE=$(tmux start-server\; showw -gv pane-base-index)
 
 /usr/bin/env node $this_dir/lib/ui/console.js --base=$BASE --verbose $@ > /tmp/.vg-console
 
-tmux source-file /tmp/.vg-console
+tmux start-server\; source-file /tmp/.vg-console
 tmux attach-session -t vg-console
