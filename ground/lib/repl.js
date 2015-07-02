@@ -36,7 +36,9 @@ export class GroundREPLServer {
 
 export class GroundREPLNetServer extends net.Server {
   constructor(station) {
-    super(socket => this.startREPL(socket));
+    super(function(socket) {
+      this.startREPL(socket);
+    });
     this.station = station;
   }
 

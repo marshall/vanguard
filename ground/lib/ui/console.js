@@ -10,7 +10,7 @@ import path from 'path';
 import _ from 'lodash';
 import shell from 'shelljs';
 import winston from 'winston';
-import program from 'Commander';
+import program from 'commander';
 
 import { VgStation } from '../../vg-station';
 
