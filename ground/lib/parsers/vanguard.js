@@ -39,15 +39,19 @@ export const MSG_TYPE_UNKNOWN          = -1;
 export const MSG_TYPE_LOCATION         = 0;
 export const MSG_TYPE_TELEMETRY        = 1;
 export const MSG_TYPE_PHOTO_DATA       = 3;
+export const MSG_TYPE_PROGRAM_UPLOAD   = 4;
+export const MSG_TYPE_PROGRAM_RESULT   = 5;
 export const MSG_TYPE_START_PHOTO_DATA = 10;
 export const MSG_TYPE_STOP_PHOTO_DATA  = 11;
 export const MSG_TYPE_PING             = 12;
 export const MSG_TYPE_PONG             = 13;
 
-export const LOCATION_SIZE          = 26;
-export const TELEMETRY_SIZE         = 20;
-export const PHOTO_DATA_HEADER_SIZE = 10;
-export const PING_PONG_SIZE         = 4;
+export const LOCATION_SIZE              = 26;
+export const TELEMETRY_SIZE             = 20;
+export const PHOTO_DATA_HEADER_SIZE     = 10;
+export const PING_PONG_SIZE             = 4;
+export const PROGRAM_UPLOAD_HEADER_SIZE = 10;
+export const PROGRAM_RESULT_HEADER_SIZE = 11;
 
 let Header = Struct().word16Ube('begin')
                      .word32Ube('timestamp')
@@ -135,6 +139,20 @@ export class Parser extends Dissolve {
             .uint16be('end')
             .pushMessage();
         break;
+
+      case MSG_TYPE_PROGRAM_RESULT:
+        this.uint16be('index')
+            .uint16be('chunk')
+            .uint16be('chunkCount')
+            .uint16be('programNameLen')
+            .uint16be('programDataLen')
+            .int8('exitCode')
+            .tap(() => {
+              this.string('programName', this.vars.programNameLen)
+                  .string('programData', this.vars.programDataLen)
+            });
+            this.pushMessage();
+        break;
     }
   }
 
@@ -158,7 +176,8 @@ export class Parser extends Dissolve {
         [MSG_TYPE_TELEMETRY]: 'telemetry',
         [MSG_TYPE_PHOTO_DATA]: 'photo-data',
         [MSG_TYPE_PING]: 'ping',
-        [MSG_TYPE_PONG]: 'pong'
+        [MSG_TYPE_PONG]: 'pong',
+        [MSG_TYPE_PROGRAM_RESULT]: 'program-result'
     }[type];
     super.push(data);
   }
@@ -272,5 +291,20 @@ export class Message extends Buffer {
 
   static fromPong(data) {
     return Message.fromPingPong(MSG_TYPE_PONG, data);
+  }
+
+  static fromProgramResult(prgData){
+    let dataLength = PROGAM_RESULT_HEADER_SIZE + prgData.programName.length + prgData.programData.length;
+    let msg = new Message(dataLength, {type: MSG_TYPE_PROGRAM_RESULT});
+    let data = new BufferOffset(dataLength);
+    data.appendUInt16BE(prgData.index);
+    data.appendUInt16BE(prgData.chunk);
+    data.appendUInt16BE(prgData.chunkCount);
+    data.appendUInt16BE(prgData.programNameLen);
+    data.appendUInt16BE(prgData.programDataLen);
+    data.appendInt8(prgData.exitCode);
+    data.append(prgData.programName);
+    data.append(prgData.programData);
+    return data;
   }
 }
