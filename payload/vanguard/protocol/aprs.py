@@ -31,7 +31,7 @@ class APRSProtocol(object):
         lon_dm = self.format_latlon_dm(lon, type='lon')
 
         if isinstance(time, (int, float)):
-            time = datetime.datetime.fromtimestamp(float('time'))
+            time = datetime.datetime.fromtimestamp(float(time))
         else:
             time = dateutil.parser.parse(time)
 
