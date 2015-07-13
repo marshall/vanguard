@@ -34,6 +34,7 @@ def gpgga_to_values(sentence):
         values['altitude'] = float(sentence.antenna_altitude) / 1000.0
 
     values['quality'] = int(sentence.gps_qual)
+    values['satellites'] = int(sentence.num_sats)
     return values
 
 def checksum(data):
