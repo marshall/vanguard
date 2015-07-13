@@ -140,21 +140,14 @@ class TX2H(object):
         self.ptt_pin = ptt_pin
         self.ptt_high = ptt_high
         self.write = self.kiss.write
-        self.start = self.kiss.start
+        self.log = logging.getLogger('radio.tx2h')
 
-    def tx_start(self):
-        if not self.ptt_pin:
-            return
-
+    def start(self):
+        self.log.info('Pulling TX2H pin %s high indefinitely', self.ptt_pin)
         GPIO.setup(self.ptt_pin, GPIO.OUT)
         GPIO.output(self.ptt_pin, GPIO.HIGH)
-        time.sleep(self.ptt_high)
+        self.kiss.start()
 
-    def tx_stop(self):
-        if not self.ptt_pin:
-            return
-        time.sleep(self.ptt_high)
-        GPIO.output(self.ptt_pin, GPIO.LOW)
 
 protocols = dict(vanguard=VanguardProtocol, aprs=APRSProtocol)
 devices = dict(xtend900=Xtend900, tx2h=TX2H)
