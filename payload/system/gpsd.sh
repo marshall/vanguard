@@ -10,4 +10,4 @@ gpsd=$(get_config '.programs.gpsd')
 gpsd_sock=$(get_config '.gps.gpsd_sock')
 
 python -c "import Adafruit_BBIO.UART as UART; UART.setup('$gps_uart')"
-exec_cmd $gpsd $gps_device -N -F $gpsd_sock
+exec_cmd $gpsd $gps_device -D 5 -N -F $gpsd_sock
