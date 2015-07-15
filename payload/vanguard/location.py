@@ -50,6 +50,8 @@ class Location(Looper):
 
     def on_stopped(self):
         self.log.info('gpsd has terminated')
+        # continue trying to connect to gpsd if it shuts down
+        return True
 
     def on_iteration(self):
         if not self.ensure_connected():
@@ -59,6 +61,8 @@ class Location(Looper):
             self.reconnect_timeout *= 2
             return
 
+        # gpsd will throw StopIteration when the session has been closed. this
+        # is gracefully handled upstream in Looper, calling on_stopped
         report = self.session.next()
 
         report_class = report.get('class')
