@@ -51,4 +51,5 @@ of the Stratosphere HAB
     <tr><td>Audio</td><td>AUD_WCLK</td><td>P9_29</td></tr>
     <tr><td>Audio</td><td>AUD_DIN</td><td>P9_30</td></tr>
     <tr><td>Audio</td><td>AUD_BCLK</td><td>P9_31</td></tr>
+    <tr><td>Low Voltage Alarm Assert</td><td>GPIO1_17</td><td>P9_23</td></tr>
 </table>
