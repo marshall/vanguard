@@ -16,34 +16,35 @@ of the Stratosphere HAB
     <!-- <tr><td>TNC-Black</td><td>TX</td><td>P9_22 - UART2_RXD</td></tr> -->
     <tr><td>GPS</td><td>RX</td><td>P9_24 - UART1_TXD</td></tr>
     <tr><td>GPS</td><td>TX</td><td>P9_26 - UART1_RXD</td></tr>
-    <tr><td>Internal thermistor</td><td>ANALOG</td><td>P9_37 - GPIO_78</td></tr>
-    <tr><td>External thermistor</td><td>ANALOG</td><td>P9_39 - GPIO_76</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P9_41 - CAM_MCLK</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P9_42 - DMAR</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_3 - GPMC_AD6</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_4 - GPMC_AD7</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_5 - GPMC_AD2</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_6 - GPMC_AD3</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_7 - GPMC_nADV_ALE</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_8 - GPMC_nOE</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_10 - GPMC_nWE</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_11 - GPMC_AD13</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_12 - GPMC_AD12</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_13 - GPMC_AD9</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_14 - GPMC_AD10</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_15 - GPMC_AD15</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_16 - GPMC_AD14</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_17 - GPMC_AD11</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_18 - GPMC_CLK</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_19 - GPMC_AD8</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_21 - GPMC_nCS1</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_22 - GPMC_AD5</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_23 - GPMC_AD4</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_24 - GPMC_AD1</td></tr>
-    <tr><td>Camera Cape</td><td>-</td><td>P8_25 - GPMC_AD0</td></tr>
+    <tr><td>External thermistor</td><td>ANALOG (AIN0)</td><td>P9_39</td></tr>
+    <tr><td>Internal thermistor</td><td>ANALOG (AIN1) </td><td>P9_40</td></tr>
+    <tr><td>Main battery voltage</td><td>ANALOG (AIN2)</td><td>P9_37</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_20</td><td>P9_41 - CAM_MCLK</td></tr>
+    <tr><td>Camera Cape</td><td>SPI1_CS1</td><td>P9_42 - DMAR</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_38</td><td>P8_3 - GPMC_AD6</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_39</td><td>P8_4 - GPMC_AD7</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_34</td><td>P8_5 - GPMC_AD2</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_35</td><td>P8_6 - GPMC_AD3</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_66</td><td>P8_7 - GPMC_nADV_ALE</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_67</td><td>P8_8 - GPMC_nOE</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_68</td><td>P8_10 - GPMC_nWE</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_45</td><td>P8_11 - GPMC_AD13</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_44</td><td>P8_12 - GPMC_AD12</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_23</td><td>P8_13 - GPMC_AD9</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_26</td><td>P8_14 - GPMC_AD10</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_47</td><td>P8_15 - GPMC_AD15</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_46</td><td>P8_16 - GPMC_AD14</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_27</td><td>P8_17 - GPMC_AD11</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_65</td><td>P8_18 - GPMC_CLK</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_22</td><td>P8_19 - GPMC_AD8</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_62</td><td>P8_21 - GPMC_nCS1</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_37</td><td>P8_22 - GPMC_AD5</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_36</td><td>P8_23 - GPMC_AD4</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_33</td><td>P8_24 - GPMC_AD1</td></tr>
+    <tr><td>Camera Cape</td><td>GPIO_32</td><td>P8_25 - GPMC_AD0</td></tr>
     <tr><td>5V-3.3V serial bidirectional voltage level shifter enable</td><td>LSF0204 (EN)</td><td>P8_26 - GPMC_CSN0</td></tr>
-    <tr><td>XTEND900</td><td>RX (DI)</td><td>P8_37 - TX5</td></tr>
-    <tr><td>XTEND900</td><td>TX (DO)</td><td>P8_38 - RX5</td></tr>
+    <tr><td>XTEND900</td><td>RX (DI) (GPIO_78)</td><td>P8_37 - TX5</td></tr>
+    <tr><td>XTEND900</td><td>TX (DO) (GPIO_79)</td><td>P8_38 - RX5</td></tr>
     <tr><td>Audio</td><td>I2C2_SCL</td><td>P9_19</td></tr>
     <tr><td>Audio</td><td>I2C2_SDA</td><td>P9_20</td></tr>
     <tr><td>Audio</td><td>AUD_MCLK</td><td>P9_25</td></tr>
