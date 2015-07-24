@@ -125,7 +125,7 @@ describe('parsers/vanguard', () => {
         .value(msg.programDataLen).isEqualTo(programData.length)
         .value(msg.exitCode).isEqualTo(0)
         .value(msg.programName).isEqualTo(programName)
-        .value(msg.programData).isEqualTo(programData);
+        .value(msg.programData === programData);
 
       done();
     });

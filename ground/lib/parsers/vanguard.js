@@ -140,6 +140,19 @@ export class Parser extends Dissolve {
             .pushMessage();
         break;
 
+      case MSG_TYPE_PROGRAM_UPLOAD:
+        this.uint16be('index')
+            .uint16be('chunk')
+            .uint16be('chunkCount')
+            .uint16be('programNameLen')
+            .uint16be('programDataLen')
+            .tap(() => {
+              this.string('programName', this.vars.programNameLen)
+                  .buffer('programData', this.vars.programDataLen)
+            });
+            this.pushMessage();
+        break;
+
       case MSG_TYPE_PROGRAM_RESULT:
         this.uint16be('index')
             .uint16be('chunk')
@@ -149,7 +162,7 @@ export class Parser extends Dissolve {
             .int8('exitCode')
             .tap(() => {
               this.string('programName', this.vars.programNameLen)
-                  .string('programData', this.vars.programDataLen)
+                  .buffer('programData', this.vars.programDataLen)
             });
             this.pushMessage();
         break;
@@ -177,6 +190,7 @@ export class Parser extends Dissolve {
         [MSG_TYPE_PHOTO_DATA]: 'photo-data',
         [MSG_TYPE_PING]: 'ping',
         [MSG_TYPE_PONG]: 'pong',
+        [MSG_TYPE_PROGRAM_UPLOAD]: 'program-upload',
         [MSG_TYPE_PROGRAM_RESULT]: 'program-result'
     }[type];
     super.push(data);
@@ -293,8 +307,25 @@ export class Message extends Buffer {
     return Message.fromPingPong(MSG_TYPE_PONG, data);
   }
 
+  static fromProgramUpload(prgData){
+    let dataLength = PROGRAM_UPLOAD_HEADER_SIZE + prgData.programName.length + prgData.programData.length;
+    let msg = new Message(dataLength, {type: MSG_TYPE_PROGRAM_UPLOAD});
+    let data = new BufferOffset(dataLength);
+    let progName = prgData.programName;
+    let progDataStr = prgData.programData;
+    data.appendUInt16BE(prgData.index);
+    data.appendUInt16BE(prgData.chunk);
+    data.appendUInt16BE(prgData.chunkCount);
+    data.appendUInt16BE(prgData.programNameLen);
+    data.appendUInt16BE(prgData.programDataLen);
+    data.append(new Buffer(progName));
+    data.append(new Buffer(progDataStr));
+    msg.setData(data);
+    return msg;
+  }
+
   static fromProgramResult(prgData){
-    let dataLength = PROGAM_RESULT_HEADER_SIZE + prgData.programName.length + prgData.programData.length;
+    let dataLength = PROGRAM_RESULT_HEADER_SIZE + prgData.programName.length + prgData.programData.length;
     let msg = new Message(dataLength, {type: MSG_TYPE_PROGRAM_RESULT});
     let data = new BufferOffset(dataLength);
     data.appendUInt16BE(prgData.index);
@@ -303,8 +334,9 @@ export class Message extends Buffer {
     data.appendUInt16BE(prgData.programNameLen);
     data.appendUInt16BE(prgData.programDataLen);
     data.appendInt8(prgData.exitCode);
-    data.append(prgData.programName);
-    data.append(prgData.programData);
-    return data;
+    data.append(new Buffer(prgData.programName));
+    data.append(new Buffer(prgData.programData));
+    msg.setData(data);
+    return msg;
   }
 }
