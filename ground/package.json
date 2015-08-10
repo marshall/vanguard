@@ -20,6 +20,7 @@
     "dissolve": "^0.3.3",
     "lodash": "^3.6.0",
     "moment": "^2.10.2",
+    "mkdirp": "0.5.1",
     "newline-json": "^0.1.1",
     "nmea": "0.0.7",
     "otaat-repl": "^1.0.2",

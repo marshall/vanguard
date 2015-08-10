@@ -96,4 +96,40 @@ describe('parsers/vanguard', () => {
 
     parser.write(buf);
   });
+  
+  it('should parse program result', done => {
+    let programName = new Buffer('helloworld');
+    let programData = new Buffer('Helloworld!');
+    let testBuf = new Buffer(programName);
+    let dataLength = vanguard.PROGRAM_RESULT_HEADER_SIZE + programName.length + programData.length;
+    let buf = new vanguard.Message(dataLength, {
+      type: vanguard.MSG_TYPE_PROGRAM_RESULT
+    });
+    let data = new BufferOffset(dataLength);
+    data.appendUInt16BE(0);
+    data.appendUInt16BE(1);
+    data.appendUInt16BE(1);
+    data.appendUInt16BE(programName.length);
+    data.appendUInt16BE(programData.length);
+    data.appendInt8(0);
+    data.append(programName);
+    data.append(programData);
+    buf.setData(data);
+
+    parser.on('data', msg => {
+      test
+        .value(msg.index).isEqualTo(0)
+        .value(msg.chunk).isEqualTo(1)
+        .value(msg.chunkCount).isEqualTo(1)
+        .value(msg.programNameLen).isEqualTo(programName.length)
+        .value(msg.programDataLen).isEqualTo(programData.length)
+        .value(msg.exitCode).isEqualTo(0)
+        .value(msg.programName).isEqualTo(programName)
+        .value(msg.programData === programData);
+
+      done();
+    });
+
+    parser.write(buf);
+  });
 });
