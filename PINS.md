@@ -55,8 +55,8 @@ of the Stratosphere HAB
     <tr><td>Audio</td><td>AUD_DIN</td><td>P9_30</td></tr>
     <tr><td>Audio</td><td>AUD_BCLK</td><td>P9_31</td></tr> -->
 <!--    <tr><td>Modem</td><td>TXD</td><td>P9_25 (GPIO3_21) </td></tr> -->
-    <tr><td>Modem</td><td>M0</td><td>P9_28 (GPIO3_17)</td></tr>
-    <tr><td>Modem</td><td>M1</td><td>P9_29 (GPIO3_15)</td></tr>
+    <tr><td>Modem</td><td>M0</td><td>P9_28 (GPIO3_17, SPI1_CSO)</td></tr>
+    <tr><td>Modem</td><td>M1</td><td>P9_29 (GPIO3_15, SPI1_DO)</td></tr>
     <tr><td>Modem</td><td>TX_RETIME</td><td>P9_30 (GPIO3_16)</td></tr>
     <tr><td>Modem</td><td>Power (key) TX2H</td><td>P9_31 (GPIO3_14, SPI1_SCLK)</td></tr>
     <tr><td>Modem</td><td>DET</td><td>P9_39 (AIN0)</td></tr> <!-- 39 and 40 are ADC input pins - but they can sense voltage -->
