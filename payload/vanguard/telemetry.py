@@ -12,7 +12,7 @@ from looper import Interval
 
 @command('telemetry')
 class Telemetry(Interval):
-    REF_VOLTAGE           = 3300    # reference voltage in millivolts
+    REF_VOLTAGE           = 1800    # reference voltage in millivolts
     SERIAL_RESISTOR       = 10000
     BCOEFFICIENT          = 3950
     THERMISTOR_NOMINAL    = 10000
