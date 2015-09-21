@@ -45,7 +45,7 @@ of the Stratosphere HAB
     <tr><td>5V-3.3V serial bidirectional voltage level shifter enable</td><td>LSF0204 (EN)</td><td>P8_26 - GPMC_CSN0</td></tr>
     <!--<tr><td>XTEND900</td><td>RX (DI) (GPIO_78)</td><td>P8_37 - TX5</td></tr>
     <tr><td>XTEND900</td><td>TX (DO) (GPIO_79)</td><td>P8_38 - RX5</td></tr> -->
-    <tr><td>Modem UART TX</td><td> (GPIO_78)</td><td>P8_37 - TX5</td></tr>
+    <tr><td>Modem UART TX (TXD)</td><td> (GPIO_78)</td><td>P8_37 - TX5</td></tr>
     <tr><td>Modem UART RX</td><td> (GPIO_79)</td><td>P8_38 - RX5</td></tr>
     <!--    <tr><td>Audio</td><td>I2C2_SCL</td><td>P9_19</td></tr>
     <tr><td>Audio</td><td>I2C2_SDA</td><td>P9_20</td></tr>
@@ -54,7 +54,7 @@ of the Stratosphere HAB
     <tr><td>Audio</td><td>AUD_WCLK</td><td>P9_29</td></tr>
     <tr><td>Audio</td><td>AUD_DIN</td><td>P9_30</td></tr>
     <tr><td>Audio</td><td>AUD_BCLK</td><td>P9_31</td></tr> -->
-    <tr><td>Modem</td><td>TXD</td><td>P9_25 (GPIO3_21) </td></tr>
+<!--    <tr><td>Modem</td><td>TXD</td><td>P9_25 (GPIO3_21) </td></tr> -->
     <tr><td>Modem</td><td>M0</td><td>P9_28 (GPIO3_17)</td></tr>
     <tr><td>Modem</td><td>M1</td><td>P9_29 (GPIO3_15)</td></tr>
     <tr><td>Modem</td><td>TX_RETIME</td><td>P9_30 (GPIO3_16)</td></tr>
