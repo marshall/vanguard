@@ -16,9 +16,9 @@ of the Stratosphere HAB
     <!-- <tr><td>TNC-Black</td><td>TX</td><td>P9_22 - UART2_RXD</td></tr> -->
     <tr><td>GPS</td><td>RX</td><td>P9_24 - UART1_TXD</td></tr>
     <tr><td>GPS</td><td>TX</td><td>P9_26 - UART1_RXD</td></tr>
+    <tr><td>Main battery voltage</td><td>ANALOG (AIN2)</td><td>P9_37</td></tr>
     <tr><td>External thermistor</td><td>ANALOG (AIN0)</td><td>P9_39</td></tr>
     <tr><td>Internal thermistor</td><td>ANALOG (AIN1) </td><td>P9_40</td></tr>
-    <tr><td>Main battery voltage</td><td>ANALOG (AIN2)</td><td>P9_37</td></tr>
     <tr><td>Camera Cape</td><td>GPIO_20</td><td>P9_41 - CAM_MCLK</td></tr>
     <tr><td>Camera Cape</td><td>SPI1_CS1</td><td>P9_42 - DMAR</td></tr>
     <tr><td>Camera Cape</td><td>GPIO_38</td><td>P8_3 - GPMC_AD6</td></tr>
@@ -54,10 +54,12 @@ of the Stratosphere HAB
     <tr><td>Audio</td><td>AUD_WCLK</td><td>P9_29</td></tr>
     <tr><td>Audio</td><td>AUD_DIN</td><td>P9_30</td></tr>
     <tr><td>Audio</td><td>AUD_BCLK</td><td>P9_31</td></tr> -->
-    <tr><td>Modem</td><td>TXD</td><td>P9_25</td></tr>
-    <tr><td>Modem</td><td>M0</td><td>P9_28</td></tr>
-    <tr><td>Modem</td><td>M1</td><td>P9_29</td></tr>
-    <tr><td>Modem</td><td>TX_RETIME</td><td>P9_30</td></tr>
-    <tr><td>Modem</td><td>TX_CLK</td><td>P9_31</td></tr>
+    <tr><td>Modem</td><td>TXD</td><td>P9_25 (GPIO3_21) </td></tr>
+    <tr><td>Modem</td><td>M0</td><td>P9_28 (GPIO3_17)</td></tr>
+    <tr><td>Modem</td><td>M1</td><td>P9_29 (GPIO3_15)</td></tr>
+    <tr><td>Modem</td><td>TX_RETIME</td><td>P9_30 (GPIO3_16)</td></tr>
+    <tr><td>Modem</td><td>Power (key) TX2H</td><td>P9_31 (GPIO3_14, SPI1_SCLK)</td></tr>
+    <tr><td>Modem</td><td>DET</td><td>P9_39 (AIN0)</td></tr> <!-- 39 and 40 are ADC input pins - but they can sense voltage -->
     <tr><td>Low Voltage Alarm Assert</td><td>GPIO1_17</td><td>P9_23</td></tr>
+
 </table>
