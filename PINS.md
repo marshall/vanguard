@@ -60,6 +60,7 @@ of the Stratosphere HAB
     <tr><td>Modem</td><td>TX_RETIME</td><td>P9_30 (GPIO3_16)</td></tr>
     <tr><td>Modem</td><td>Power (key) TX2H</td><td>P9_31 (GPIO3_14, SPI1_SCLK)</td></tr>
     <tr><td>Modem</td><td>DET</td><td>P9_39 (AIN0)</td></tr> <!-- 39 and 40 are ADC input pins - but they can sense voltage -->
+    <tr><td>Modem</td><td>RSSI</td><td>P9_37 (AIN2)</td></tr> <!-- 39 and 40 are ADC input pins - but they can sense voltage -->
     <tr><td>Low Voltage Alarm Assert</td><td>GPIO1_17</td><td>P9_23</td></tr>
 
 </table>
