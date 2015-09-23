@@ -51,14 +51,14 @@ of the Stratosphere HAB
     <!--<tr><td>Modem</td><td>TXD</td><td>P9_25 (GPIO3_21) </td></tr> -->
     <tr><td>Low Voltage Alarm Assert</td><td>GPIO1_17</td><td>P9_23</td></tr>
     <tr><td>GPS</td><td>RX</td><td>P9_24 - UART1_TXD</td></tr>
+    <tr><td>Modem</td><td>DET</td><td>P9_25 (GPIO3_21, GPIO_117 ) </td></tr> 
     <tr><td>GPS</td><td>TX</td><td>P9_26 - UART1_RXD</td></tr>
     <tr><td>Modem</td><td>M0</td><td>P9_28 (GPIO3_17, SPI1_CSO)</td></tr>
     <tr><td>Modem</td><td>M1</td><td>P9_29 (GPIO3_15, SPI1_DO)</td></tr>
     <tr><td>Modem</td><td>TX_RETIME</td><td>P9_30 (GPIO3_16)</td></tr>
     <tr><td>Modem</td><td>Power (key) TX2H</td><td>P9_31 (GPIO3_14, SPI1_SCLK)</td></tr>
     <tr><td>RX2A</td><td>RSSI</td><td>P9_35 (AIN6)</td></tr> <!-- ADC input pins sense voltage -->
-    <tr><td>Modem</td><td>DET</td><td>P9_36 (AIN5)</td></tr> 
-    <tr><td>Main battery voltage</td><td>Voltage sense</td><td>P9_37 (AIN2)</td></tr>
+        <tr><td>Main battery voltage</td><td>Voltage sense</td><td>P9_37 (AIN2)</td></tr> <!-- Need to add a voltage divider to this circuit! -->
     <tr><td>Alternate Internal Thermistor (radio cape)</td><td>Voltage sense</td><td>P9_38 (AIN3)</td></tr>
     <tr><td>External thermistor</td><td>Voltage sense</td><td>P9_39 (AIN0)</td></tr>
     <tr><td>Internal thermistor</td><td>Voltage sense</td><td>P9_40 (AIN1)</td></tr>
