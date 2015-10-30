@@ -16,6 +16,7 @@ import uuid from 'uuid';
 
 import log from './log';
 import { Parser as VgParser, Message } from './parsers/vanguard';
+import { Parser as AprsParser } from './parsers/aprs';
 import * as vanguard from './parsers/vanguard';
 import { Parser as NmeaParser } from './parsers/nmea';
 import * as repl from './repl';
@@ -91,11 +92,8 @@ export class Station extends EventEmitter {
 
   checkRadio() {
     return new Promise((resolve, reject) => {
-      if (this.radioDevice || this.mock) {
-        resolve(this.radioDevice);
-        return;
-      }
-      this.detectRadio(resolve, reject);
+      resolve();
+      return;
     });
   }
 
@@ -133,13 +131,6 @@ export class Station extends EventEmitter {
 
   openRadio() {
     return new Promise((resolve, reject) => {
-      if (this.radioDevice === '-') {
-        this.radioIn = process.stdin;
-        this.radioOut = null;
-        process.stdin.once('readable', resolve);
-        return;
-      }
-
       if (this.mock) {
         let proc = spawn(process.execPath,
                          [__dirname + '/../mock/mock-balloon.js']);
@@ -148,6 +139,13 @@ export class Station extends EventEmitter {
         resolve();
         return;
       }
+      
+      let dir = path.join(__dirname, '..', '..', '..', 'tools', 'rtlfm_demod.sh');
+      let proc = spawn('/bin/bash',[dir]);
+      this.radioIn = proc.stdout;
+      this.radioOut = null;
+      process.stdin.once('readable', resolve);
+      return;
 
       log.info('Serial device: %s, baudrate: %d', this.radioDevice, this.radioBaud);
       var port = new SerialPort(this.radioDevice, {
@@ -178,7 +176,7 @@ export class Station extends EventEmitter {
     this.checkRadio()
         .then(this.openRadio())
         .then(() => {
-          this.startParser(this.radioIn, 'radio', VgParser);
+          this.startParser(this.radioIn, 'radio', AprsParser);
         })
         .catch(err => {
           log.error(err);
@@ -193,6 +191,10 @@ export class Station extends EventEmitter {
     });
 
     stream.pipe(parser);
+  }
+
+  sendMessage(msg){ //modulation through python AFSK
+    spawn('/bin/bash', [path.join(__dirname, '..', '..', 'lib', 'modulateData.sh'), msg]);
   }
 
   handleMessage(source, msg) {
@@ -305,13 +307,8 @@ export class Station extends EventEmitter {
     return this.lastMsg[type || '__all__'];
   }
 
-  ping(magic) {
+  ping(magic) { //Changing to IP ping next
     return new Promise((resolve, reject) => {
-      if (!this.radioOut) {
-        reject('Radio output not connected');
-        return;
-      }
-
       var self = this;
       this.on('message', function handler(msg) {
         if (msg.type === 'pong' && msg.magic === magic) {
@@ -320,7 +317,7 @@ export class Station extends EventEmitter {
         }
       });
 
-      this.radioOut.write(new Buffer(Message.fromPing({ magic })));
+      this.sendMessage(new Buffer(Message.fromPing({ magic })));
     });
   }
 
