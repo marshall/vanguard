@@ -140,8 +140,8 @@ export class Station extends EventEmitter {
         return;
       }
       
-      let dir = '/Users/kyleparrott/Kubos/Kubos/vanguard/ground/lib/spawn.js'
-      let proc = spawn(process.execPath, [dir]);
+      let dir = path.join(__dirname, '..', '..', '..', 'tools', 'rtlfm_demod.sh');
+      let proc = spawn('/bin/bash',[dir]);
 
       this.radioIn = proc.stdout;
       this.radioOut = null;
