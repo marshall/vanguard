@@ -3,10 +3,9 @@ import assert from 'assert';
 import BufferOffset from 'buffer-offset';
 import crc32 from 'buffer-crc32';
 import Dissolve from 'dissolve';
+// import sprintf from 'sprintf'; //TODO - lat & lon format
 import { Transform } from 'stream';
 import util from 'util';
-import Buffer from 'buffer';
-
 
 //vanguard APRS protocol packets have fixed length data format
 export const MULTIMON_PREFIX_SIZE     = 26; //The Callsign and other data prefixed to the message content
@@ -19,7 +18,6 @@ export const BASE_URL                 = ' https://www.google.com/maps?z=12&t=m&q
 export class Parser extends Dissolve {
   constructor() {
     super();
-    this.discard = '';
     this.loop(end => {
       this.parse();
     });
@@ -33,14 +31,6 @@ export class Parser extends Dissolve {
             this.parseHeader();
           }
         });
-      }else{
-        this.discard += String.fromCharCode(this.vars.begin >> 40);
-        this.discard += String.fromCharCode(this.vars.begin & 0xff);
-        return;
-      }
-
-      if (this.discard.length > 0) {
-        this.discard = '';
       }
     });
   }

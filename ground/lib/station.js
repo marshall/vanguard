@@ -140,8 +140,9 @@ export class Station extends EventEmitter {
         return;
       }
       
-      let dir = path.join(__dirname, '..', '..', '..', 'tools', 'rtlfm_demod.sh');
-      let proc = spawn('/bin/bash',[dir]);
+      let dir = '/Users/kyleparrott/Kubos/Kubos/vanguard/ground/lib/spawn.js'
+      let proc = spawn(process.execPath, [dir]);
+
       this.radioIn = proc.stdout;
       this.radioOut = null;
       process.stdin.once('readable', resolve);
@@ -193,8 +194,8 @@ export class Station extends EventEmitter {
     stream.pipe(parser);
   }
 
-  sendMessage(msg){ //modulation through python AFSK
-    spawn('/bin/bash', [path.join(__dirname, '..', '..', 'lib', 'modulateData.sh'), msg]);
+  sendMessage(msg){ //modulation through python AFSK 
+    spawn('/bin/bash', [path.join(__dirname, '..', '..', 'lib', 'modulateData.sh'), this.aprsClient.user, msg]);
   }
 
   handleMessage(source, msg) {
