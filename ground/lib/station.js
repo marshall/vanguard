@@ -139,7 +139,7 @@ export class Station extends EventEmitter {
         resolve();
         return;
       }
-      
+
       let dir = path.join(__dirname, '..', '..', '..', 'tools', 'rtlfm_demod.sh');
       let proc = spawn('/bin/bash',[dir]);
 
@@ -194,8 +194,8 @@ export class Station extends EventEmitter {
     stream.pipe(parser);
   }
 
-  sendMessage(msg){ //modulation through python AFSK 
-    spawn('/bin/bash', [path.join(__dirname, '..', '..', 'lib', 'modulateData.sh'), this.aprsClient.user, msg]);
+  sendMessage(msg) { //modulation through python AFSK 
+    spawn('/bin/bash', [path.join(__dirname, '..', '..', 'lib', 'modulate_data.sh'), this.aprsClient.user, msg]);
   }
 
   handleMessage(source, msg) {
@@ -211,7 +211,7 @@ export class Station extends EventEmitter {
     if (msg.type === 'location') {
       this.aprsPublish(msg);
     }
-    if (msg.type === 'program-result'){
+    if (msg.type === 'program-result') {
       this.handleResult(msg);
     }
   }
@@ -235,28 +235,28 @@ export class Station extends EventEmitter {
     }
   }
 
-  handleResult(msg){
+  handleResult(msg) {
     let programDir = path.join('/tmp', 'vanguard', 'uploads', 'results', msg.programName);
     let chunkName = 'chunk' + msg.chunk + '.dat';
     let chunkPath = path.join(programDir, chunkName);
     let indexFile = path.join(programDir, 'index.kbf');
     log.debug('Received chunk %d of %d for program %s', msg.chunk, msg.chunkCount, msg.programName);
 
-    if(!fs.existsSync(programDir)){ // first result msg for program
+    if(!fs.existsSync(programDir)) { // first result msg for program
       mkdirp.sync(programDir);
       fs.writeFileSync(chunkPath, msg.programData);
       let size = 2 + msg.chunkCount;
       let buf = new BufferOffset(size);
       buf.appendInt8(msg.chunkCount);
       let boolArr =[];
-      for(let x = 0; x < msg.chunkCount; x++){
+      for(let x = 0; x < msg.chunkCount; x++) {
         boolArr.push(false);
       }
       boolArr[msg.index] = true;
       buf.append(new Buffer(boolArr));
       fs.writeFileSync(indexFile, buf); 
 
-      if(msg.chunkCount === 1){
+      if(msg.chunkCount === 1) {
         this.assembleFile(msg);
       }
     } else { // partially received program
@@ -265,9 +265,9 @@ export class Station extends EventEmitter {
       let readSize = resultBuffer.getInt8();
       let tempVal = 0;
       let resultArr = [];
-      for (let y = 0; y < readSize; y++){
+      for (let y = 0; y < readSize; y++) {
         tempVal = resultBuffer.getInt8();
-        if(tempVal === 1){
+        if(tempVal === 1) {
           resultArr.push(true);
         } else {
           resultArr.push(false);
@@ -279,17 +279,17 @@ export class Station extends EventEmitter {
       updatedBuffer.appendInt8(msg.chunkCount);
       updatedBuffer.append(new Buffer(resultArr));
       fs.writeFileSync(indexFile, updatedBuffer); 
-      if(resultArr.every(elem => elem == true) ){
+      if(resultArr.every(elem => elem == true)) {
         this.assembleFile(msg);
       }
     }
   }
 
-  assembleFile(msg){
+  assembleFile(msg) {
     let fileString = '', chunkPath = '', chunkFileName = '';
     let programDir = path.join('/tmp', 'vanguard', 'uploads', 'results', msg.programName);
     let stdoutFile = path.join(programDir, 'stdout.log');
-    for(let x = 1; x <= msg.chunkCount; x++){
+    for(let x = 1; x <= msg.chunkCount; x++) {
       chunkFileName = 'chunk' + x + '.dat';
       chunkPath = path.join(programDir, chunkFileName)
       fileString = fs.readFileSync(chunkPath);
@@ -317,14 +317,13 @@ export class Station extends EventEmitter {
           resolve(msg);
         }
       });
-
-      this.sendMessage(new Buffer(Message.fromPing({ magic })));
+      this.sendMessage(new Buffer(Message.fromPing( { magic } )));
     });
   }
 
   upload(filePath) {
     return new Promise((resolve, reject) => { 
-      if (!this.radioOut){
+      if (!this.radioOut) {
         reject('Radio output not Connected');
         return;
       }
@@ -338,13 +337,13 @@ export class Station extends EventEmitter {
       let programDataStr = fs.readFileSync(filePath, "utf8");
       let stagingDir = path.join(path.dirname(path.dirname(__dirname)), 'uploads', 'sendStaging', programName);
       
-      if (!fs.existsSync(stagingDir)){
+      if (!fs.existsSync(stagingDir)) {
         mkdirp.sync(stagingDir);
       }
       let offset = 0;
-      fs.open(filePath, 'r', function(err, fd){
-        for(let x = 0; x < numChunks; x++){
-           if(size < maxDataLength){
+      fs.open(filePath, 'r', function(err, fd) {
+        for(let x = 0; x < numChunks; x++) {
+           if(size < maxDataLength) {
               maxDataLength = size; //prevent reading more bytes than the file
             }
             let chunkName = 'chunk' + x + '.dat';
@@ -358,14 +357,14 @@ export class Station extends EventEmitter {
       log.debug('Split file %s into %d chunks..', programName, numChunks);
       
       let self = this;
-      this.on('message', function handler(msg){
-        if(msg.type === 'program-result'){    
+      this.on('message', function handler(msg) {
+        if(msg.type === 'program-result') {    
           self.removeListener('message', handler);
           resolve(msg);
         }
       });
 
-      for(let x = 0; x < numChunks; x++){
+      for(let x = 0; x < numChunks; x++) {
         let chunkName = 'chunk' + x + '.dat'
         let chunkPath = path.join(stagingDir, chunkName);
         let chunkDataStr = fs.readFileSync(chunkPath);

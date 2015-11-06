@@ -3,7 +3,9 @@ import assert from 'assert';
 import BufferOffset from 'buffer-offset';
 import crc32 from 'buffer-crc32';
 import Dissolve from 'dissolve';
-// import sprintf from 'sprintf'; //TODO - lat & lon format
+import moment from 'moment';
+import nmeaHelpers from 'nmea/helpers';
+import { sprintf } from 'sprintf-js';
 import { Transform } from 'stream';
 import util from 'util';
 
@@ -13,7 +15,8 @@ export const MSG_TYPE_LOCATION        = 1;
 export const MSG_TYPE_TELEMETRY       = 2;
 export const POSITION_DATA_LENGTH     = 43; 
 export const TELEMETRY_DATA_LENGTH    = 34;
-export const BASE_URL                 = ' https://www.google.com/maps?z=12&t=m&q=loc:';
+
+const BASE_URL_FORMAT                 = ' http://www.maps.google.com/?q=%f,%f';
 
 export class Parser extends Dissolve {
   constructor() {
@@ -27,7 +30,7 @@ export class Parser extends Dissolve {
     this.string('begin', 1).tap(() => {
       if (this.vars.begin === 'A') {
         this.string('next',4).tap(() => {
-          if(this.vars.next === 'PRS:'){
+          if(this.vars.next === 'PRS:') {
             this.parseHeader();
           }
         });
@@ -35,32 +38,32 @@ export class Parser extends Dissolve {
     });
   }
 
-  parseHeader(){
+  parseHeader() {
     this.string('header', MULTIMON_PREFIX_SIZE);
     this.string('type', 1).tap(()=> {
-      if (this.vars.type === '/'){
+      if (this.vars.type === '/') {
         this.vars.type = 'location';
         this.parsePosition();
-      }else if (this.vars.type === 'T'){
+      }else if (this.vars.type === 'T') {
         this.vars.type = 'telemetry';
         this.parseTelemtety();
       }
     });
   }
 
-  parseTelemtety(){
+  parseTelemtety() {
     this.string('data', TELEMETRY_DATA_LENGTH - 1).tap(() => {
       this.tapTelemetry();
-    })
+    });
   }
 
-  parsePosition(){
+  parsePosition() {
       this.string('data', POSITION_DATA_LENGTH - 1).tap(() => {
         this.tapPosition();
-    })
+    });
   }
 
-  tapTelemetry(){
+  tapTelemetry() {
     let strArray = this.vars.data.split(',');
     this.vars.packetId = strArray[0];
     this.vars.intTemp  = strArray[1];
@@ -74,22 +77,31 @@ export class Parser extends Dissolve {
     this.vars = {};
   }
 
-  tapPosition(){
-    let expr = /h|O|\//g;   //fixed field format and deliminators in the APRS Prototcol.
+  tapPosition() {
+    let expr = /h|O|\//g;   //fixed field deliminators in the APRS Prototcol.
     let strArray = this.vars.data.split(expr);
-    this.vars.time   = strArray[0];
-    this.vars.lat    = strArray[1].replace(/\D/g,''); // remove n
-    this.vars.lon    = strArray[2].replace(/\D/g,''); // remove w
-    this.vars.course = strArray[3];
-    this.vars.speed  = strArray[4];
-    this.vars.alt    = strArray[5].replace(/\D/g,''); //remove A
+    
+    let msgTime = strArray[0];
+    let msgDate = moment().format('MM DD YYYY'); // Supplement the received time with the ground station date to create timestamp
+    let hour = msgTime.substr(0, 2);
+    let min  = msgTime.substr(2, 2);
+    let sec  = msgTime.substr(4, 2);
+    msgTime  = hour.concat(' ', min, ' ', sec);
+    let dateTime = msgDate.concat(' ', msgTime);
+    this.vars.timestamp = moment().utc(dateTime) / 1000; //Create UTC timestamp from ballon time and ground station date
+
+    let latHemisphere  = strArray[1].charAt(7);
+    let longHemisphere = strArray[2].charAt(7);
+    this.vars.lat      = parseFloat(nmeaHelpers.parseLatitude(strArray[1], latHemisphere)); 
+    this.vars.lon      = parseFloat(nmeaHelpers.parseLongitude(strArray[2], longHemisphere));
+    this.vars.course   = strArray[3];
+    this.vars.speed    = strArray[4];
+    this.vars.alt      = strArray[5].substr(2,6) / 3.28084; //convert from feet to meters
     this.addMapLink();
   }
 
-  addMapLink(){ //add the google map link to coordnates
-    this.vars.lon = this.vars.lon/-10000; // negative to account for western hemisphere.
-    this.vars.lat = this.vars.lat/10000 ; 
-    this.vars.url = BASE_URL + this.vars.lat + '+' + this.vars.lon; 
+  addMapLink() { //add the google map link to coordnates
+    this.vars.url = sprintf(BASE_URL_FORMAT, this.vars.lat, this.vars.lon);
     let data = _.omit(this.vars, 'next', 'header', 'data', 'begin');
     super.push(data);
     this.vars = {};
