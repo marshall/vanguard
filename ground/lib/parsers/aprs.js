@@ -65,7 +65,7 @@ export class Parser extends Dissolve {
 
   tapTelemetry() {
     let strArray = this.vars.data.split(',');
-    this.vars.packetId = strArray[0];
+    this.vars.packetId = strArray[0].replace('#', ''); //remove message marker
     this.vars.intTemp  = strArray[1];
     this.vars.extTemp  = strArray[2];
     this.vars.cpu      = strArray[3];
@@ -78,7 +78,7 @@ export class Parser extends Dissolve {
   }
 
   tapPosition() {
-    let expr = /h|O|\//g;   //fixed field deliminators in the APRS Prototcol.
+    let expr = /h|O|\//g;   //fixed field delimiters in the APRS Prototcol.
     let strArray = this.vars.data.split(expr);
     
     let msgTime = strArray[0];
