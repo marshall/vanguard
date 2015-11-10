@@ -11,6 +11,7 @@ import path from 'path';
 import Promise from 'promise';
 import serialport, { SerialPort } from 'serialport';
 import { spawn, fork } from 'child_process';
+import sudo from 'sudo';
 import util from 'util';
 import uuid from 'uuid';
 
@@ -24,6 +25,7 @@ import TrackDB from './trackdb';
 import * as aprs from './aprs';
 
 const APRS_INTERVAL = 30000; // Every 30 seconds
+const IP_PACKET_FILTER_SIZE = 57; // Filter size of ip packets
 
 export class Station extends EventEmitter {
   constructor(options) {
@@ -317,8 +319,48 @@ export class Station extends EventEmitter {
           resolve(msg);
         }
       });
-      this.sendMessage(new Buffer(Message.fromPing( { magic } )));
+
+      this.options = { //for sudo
+          cachePassword: true,
+          prompt: 'Password:',
+          spawnOptions: { }
+      };
+
+      let pingListenerDir = path.join(__dirname, '..', '..', 'lib', 'pingListener.py');
+      let pingListener = sudo(['python', '-u', pingListenerDir], this.options); //must execute as root to access /dev/tun0
+       
+      pingListener.stdout.on('data', packet => {
+        if(packet.length === IP_PACKET_FILTER_SIZE) {  //ping packets to ip fe80:.. are exactly 57 bytes. Filter other packets that are received.
+          log.debug('transmitting ping packet: ' + packet.toString('hex'));
+          this.sendMessage(new Buffer(packet));
+          pingListener.kill();
+          resolve();    // Going to change when pong message functionality is added.
+        } 
+      });
+
+      pingListener.stdout.once('data', data => {
+        this.assignIp();
+      });    
+
     });
+  }
+
+  assignIp() {
+    let ifconfigCmd = ['ifconfig', 'tun0', 'inet6', 'fe80::1234'];       //Assign the tun0 interface an ip address
+    let ifconfig = sudo(ifconfigCmd, this.options); 
+    
+    ifconfig.stdout.once('readable', () => {
+        this.spawnPing();
+    });
+  }
+
+  spawnPing() {
+    let pingCmd = 'ping6';  
+    let pingCmdArgs = '-c1';     
+    let tunInterface = 'tun0';
+    let balloonIpAddr = 'fe80::aebc:32ff:fe79:57b1'; 
+    let pingArgs = [pingCmdArgs, balloonIpAddr.concat('%', tunInterface)];
+    spawn('ping6', pingArgs);
   }
 
   upload(filePath) {
