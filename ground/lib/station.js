@@ -24,6 +24,7 @@ import TrackDB from './trackdb';
 import * as aprs from './aprs';
 
 const APRS_INTERVAL = 30000; // Every 30 seconds
+const IP_PACKET_FILTER_SIZE = 57; // Filter size of ip packets
 
 export class Station extends EventEmitter {
   constructor(options) {
@@ -331,7 +332,7 @@ export class Station extends EventEmitter {
       let pingListener = sudo(['python', '-u', pingListenerDir], this.options); //must execute as root to access /dev/tun0
        
       pingListener.stdout.on('data', packet => {
-        if(packet.length === 57) {  //ping packets to ip fe80:.. are exactly 57 bytes. Filter other packets that are received.
+        if(packet.length === IP_PACKET_FILTER_SIZE) {  //ping packets to ip fe80:.. are exactly 57 bytes. Filter other packets that are received.
           log.debug('transmitting ping packet: ' + packet.toString('hex'));
           this.sendMessage(new Buffer(packet));
           pingListener.kill();
