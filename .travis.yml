@@ -1,0 +1,9 @@
+before_script: 
+  - "npm install gulp"
+  
+script: 
+  - cd ground && npm install && gulp test
+
+language: node_js
+node_js: 
+  - "0.10"
